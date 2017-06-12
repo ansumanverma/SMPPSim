@@ -22,16 +22,16 @@
  * @author martin@seleniumsoftware.com
  * http://www.woolleynet.com
  * http://www.seleniumsoftware.com
- * $Header: /var/cvsroot/SMPPSim2/distribution/2.6.9/SMPPSim/src/java/com/seleniumsoftware/SMPPSim/OutboundQueue.java,v 1.1 2012/07/24 14:48:59 martin Exp $
+ * $Header: /var/cvsroot/SMPPSim2/src/java/com/seleniumsoftware/SMPPSim/OutboundQueue.java,v 1.10 2014/05/25 10:42:27 martin Exp $
  ****************************************************************************
 */
 package com.seleniumsoftware.SMPPSim;
+
 import com.seleniumsoftware.SMPPSim.exceptions.*;
 import com.seleniumsoftware.SMPPSim.pdu.SubmitSM;
 
 import java.util.logging.*;
 import java.util.*;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Martin Woolley
@@ -40,11 +40,12 @@ import org.slf4j.LoggerFactory;
  * 
  * Processed by the State Lifecycle Service
  */
-public class OutboundQueue implements Runnable  {
+public class OutboundQueue implements Runnable {
 
-    private static org.slf4j.Logger logger = LoggerFactory.getLogger(OutboundQueue.class);
-//	private static Logger logger = Logger.getLogger("com.seleniumsoftware.smppsim");
+	private static Logger logger = Logger.getLogger("com.seleniumsoftware.smppsim");
+
 	private Smsc smsc = Smsc.getInstance();
+
 	private LifeCycleManager lcm = smsc.getLcm();
 
 	ArrayList<MessageState> queue;
@@ -53,28 +54,20 @@ public class OutboundQueue implements Runnable  {
 		queue = new ArrayList<MessageState>(maxsize);
 	}
 
-	public synchronized void addMessageState(MessageState message)
-		throws OutboundQueueFullException {
-		logger.debug(
-			"OutboundQueue: adding object to queue<"
-				+ message.toString()
-				+ ">");
+	public synchronized void addMessageState(MessageState message) throws OutboundQueueFullException {
+		logger.finest("OutboundQueue: adding object to queue<" + message.toString() + ">");
 		if (queue.size() < smsc.getOutbound_queue_capacity()) {
 			queue.add(message);
-			logger.debug(
-				"Added object to OutboundQueue. Queue now contains "
-					+ queue.size()
-					+ " object(s)");
+			logger.fine("Added object to OutboundQueue. Queue now contains " + queue.size() + " object(s)");
 			if (message.isIntermediate_notification_requested()) {
 				SubmitSM p = message.getPdu();
-					// delivery_receipt requested
-					logger.info("Intermediate notification requested");
-					smsc.prepareDeliveryReceipt(p, message.getMessage_id(), message.getState(),1, 1,message.getErr());
+				// delivery_receipt requested
+				logger.info("Intermediate notification requested");
+				smsc.prepareDeliveryReceipt(p, message.getMessage_id(), message.getState(), 1, 1, message.getErr());
 			}
 			notifyAll();
 		} else
-			throw new OutboundQueueFullException(
-				"Request to add to OutboundQueue rejected as to do so would exceed max size of "
+			throw new OutboundQueueFullException("Request to add to OutboundQueue rejected as to do so would exceed max size of "
 					+ smsc.getOutbound_queue_capacity());
 	}
 
@@ -83,11 +76,10 @@ public class OutboundQueue implements Runnable  {
 		updateMessageState(m);
 	}
 
-	public synchronized MessageState getMessageState(MessageState m)
-		throws MessageStateNotFoundException {
-//		logger.info("getMessageState:"+m.keyToString());
+	public synchronized MessageState getMessageState(MessageState m) throws MessageStateNotFoundException {
+		//		logger.info("getMessageState:"+m.keyToString());
 		int i = queue.indexOf(m);
-//		logger.info("queue pos="+i);
+		//		logger.info("queue pos="+i);
 		if (i > -1) {
 			MessageState message = queue.get(i);
 			return message;
@@ -96,8 +88,7 @@ public class OutboundQueue implements Runnable  {
 		}
 	}
 
-	public synchronized void updateMessageState(MessageState newMs)
-		throws MessageStateNotFoundException {
+	public synchronized void updateMessageState(MessageState newMs) throws MessageStateNotFoundException {
 		int i = queue.indexOf(newMs);
 		if (i > -1) {
 			queue.set(i, newMs);
@@ -106,12 +97,7 @@ public class OutboundQueue implements Runnable  {
 		}
 	}
 
-	public MessageState queryMessageState(
-		String message_id,
-		int ton,
-		int npi,
-		String addr)
-		throws MessageStateNotFoundException {
+	public MessageState queryMessageState(String message_id, int ton, int npi, String addr) throws MessageStateNotFoundException {
 		MessageState m = new MessageState();
 		m.setMessage_id(message_id);
 		m.setSource_addr_ton(ton);
@@ -124,14 +110,9 @@ public class OutboundQueue implements Runnable  {
 		int i = queue.indexOf(m);
 		if (i > -1) {
 			MessageState message = queue.remove(i);
-			logger.debug(
-				"Removed object from OutboundQueue. Queue now contains "
-					+ queue.size()
-					+ " object(s)");
+			logger.fine("Removed object from OutboundQueue. Queue now contains " + queue.size() + " object(s)");
 		} else {
-			logger.error(
-				"Attempt to remove non-existent object from OutboundQueue: "
-					+ m.toString());
+			logger.warning("Attempt to remove non-existent object from OutboundQueue: " + m.toString());
 		}
 	}
 
@@ -151,48 +132,53 @@ public class OutboundQueue implements Runnable  {
 		// This code is termed the Lifecycle Manager Service.
 
 		logger.info("Starting Lifecycle Service (OutboundQueue)");
-		do // process queue forever
-			{
+		do // process queue
+		{
 			processQueue();
-		} while (true);
+		} while (smsc.isRunning());
+		logger.info("Lifecycle Service (OutboundQueue) is exiting");
+
 	}
 
 	private void processQueue() {
-		Object[] messages;
+		Object[] messages = null;
 		int count;
 		MessageState m;
-		int oldState;
 		long start;
 		long finish;
 		long duration;
 		long sleeptime;
 		synchronized (this) {
-			while (isEmpty()) {
+			while (smsc.isRunning() && isEmpty()) {
 				try {
-					logger.info(
-						"Lifecycle Service: OutboundQueue is Empty  - waiting");
+					logger.info("Lifecycle Service: OutboundQueue is empty  - waiting");
 					wait();
 				} catch (InterruptedException e) {
-					logger.error(
-						"Exception in OutboundQueue: " + e.getMessage(),
-						e);
+					if (smsc.isRunning()) {
+						logger.log(Level.WARNING, "Exception in OutboundQueue: " + e.getMessage(), e);
+					}
 				}
 			}
 			start = System.currentTimeMillis();
-			messages = getAllMessageStates();
+			if (smsc.isRunning()) {
+				messages = getAllMessageStates();
+			}
 			// Can allow other threads to compete for lock now since working on array from this point
 			notifyAll();
 		}
+		if (!smsc.isRunning()) {
+			return;
+		}
 		count = messages.length;
-		//logger.info("Assessing state of " + count + " messages in the OutboundQueue");
+		logger.info("Assessing state of " + count + " messages in the OutboundQueue");
 		for (int i = 0; i < count; i++) {
 			m = (MessageState) messages[i];
 			if (!m.responseSent()) {
-				//logger.debug("Response not yet sent so ignoring this MessageState object for now");
+				logger.finest("Response not yet sent so ignoring this MessageState object for now");
 				continue;
 			}
 			if (lcm.messageShouldBeDiscarded(m)) {
-				//logger.debug("Disarding OutboundQueue message " + m.toString());
+				logger.finest("Disarding OutboundQueue message " + m.toString());
 				removeMessageState(m);
 			} else {
 				byte currentState = m.getState();
@@ -204,19 +190,13 @@ public class OutboundQueue implements Runnable  {
 		sleeptime = SMPPSim.getMessageStateCheckFrequency() - duration;
 		if (sleeptime > 0) {
 			try {
-				logger.debug(
-					"Lifecycle Service sleeping for "
-						+ sleeptime
-						+ " milliseconds");
+				logger.finest("Lifecycle Service sleeping for " + sleeptime + " milliseconds");
 				Thread.sleep(sleeptime);
 			} catch (InterruptedException e) {
-				logger.error(
-					"Exception whilst Lifecycle Service was sleeping "
-						+ e.getMessage());
 			}
 		} else {
-			logger.error(
-				"It's taking longer to process the OutboundQueue than MESSAGE_STATE_CHECK_FREQUENCY milliseconds. Recommend this value is increased");
+			logger
+					.warning("It's taking longer to process the OutboundQueue than MESSAGE_STATE_CHECK_FREQUENCY milliseconds. Recommend this value is increased");
 		}
 	}
 

@@ -22,7 +22,7 @@
  * @author martin@seleniumsoftware.com
  * http://www.woolleynet.com
  * http://www.seleniumsoftware.com
- * $Header: /var/cvsroot/SMPPSim2/distribution/2.6.9/SMPPSim/src/java/com/seleniumsoftware/SMPPSim/HttpHandler.java,v 1.1 2012/07/24 14:48:59 martin Exp $
+ * $Header: /var/cvsroot/SMPPSim2/src/java/com/seleniumsoftware/SMPPSim/HttpHandler.java,v 1.19 2014/05/25 10:42:27 martin Exp $
  ****************************************************************************
  */
 
@@ -33,12 +33,11 @@ import com.seleniumsoftware.SMPPSim.pdu.*;
 import com.seleniumsoftware.SMPPSim.pdu.util.PduUtilities;
 import com.seleniumsoftware.SMPPSim.util.Utilities;
 
+import java.util.logging.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.text.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Class <code>HttpHandler</code> is a very simple http server which provides
@@ -48,12 +47,15 @@ import org.slf4j.LoggerFactory;
  */
 
 public class HttpHandler implements Runnable {
-//	private static Logger logger = Logger
-//			.getLogger("com.seleniumsoftware.smppsim");
+	private static Logger logger = Logger.getLogger("com.seleniumsoftware.smppsim");
 
-    private static Logger logger = LoggerFactory.getLogger(DeterministicLifeCycleManager.class);
-    
 	private Smsc smsc = Smsc.getInstance();
+
+	private BufferedReader is = null;
+
+	private OutputStream os = null;
+
+	private Socket socket = null;
 
 	private DeliverSM newMessage;
 
@@ -74,8 +76,6 @@ public class HttpHandler implements Runnable {
 	boolean responseOK;
 
 	boolean firstStopRequest = true;
-
-	boolean running = true;
 
 	private SimpleDateFormat sft;
 
@@ -391,61 +391,75 @@ public class HttpHandler implements Runnable {
 		while (st.hasMoreElements()) {
 			authorisedFiles.add(st.nextToken());
 		}
-		logger.debug("Creating HttpHandler for docRoot " + docRootName);
+		logger.finest("Creating HttpHandler for docRoot " + docRootName);
 	}
 
 	public void run() {
-		logger.info("Starting HttpHandler thread. Listening on port "
-				+ SMPPSim.getHTTPPort() + " for conections");
+		logger.info("Starting HttpHandler thread. Listening on port " + SMPPSim.getHTTPPort() + " for connections");
 		byte[] HTTPresponse;
 		String request = null;
 		http200Response = http200Message.getBytes();
 		http400Response = http400Message.getBytes();
 		http500Response = http500Message.getBytes();
-		BufferedReader is = null;
-		OutputStream os = null;
-		Socket socket = null;
 
-		do // process connections forever.... or less
+		Smsc smsc = Smsc.getInstance();
+
+		do // process connections whilst SMSC component is running
 		{
 			try {
-				logger.debug("HttpHandler thread is waiting for connection");
+				logger.finest("HttpHandler thread is waiting for connection");
 				socket = smsc.getCss().accept();
-				logger.debug("accepted connection");
+				logger.finest("accepted connection");
 			} catch (IOException e) {
-				logger.error("exception accepting connection");
-			}
-			try {
-				is = new BufferedReader(new InputStreamReader(socket
-						.getInputStream()));
-			} catch (IOException e) {
-				logger.error("failure getting input stream");
-			}
-			try {
-				os = socket.getOutputStream();
-			} catch (IOException e) {
-				logger.error("failure getting output stream");
-			}
-			try {
-				request = readRequest(is);
-			} catch (Exception e) {
-				logger.error("failure getting request string");
-			}
-
-			response = processRequest(request);
-
-			if (responseOK) {
-				try {
-					writeResponse(response, os);
-				} catch (Exception e) {
+				if (smsc.isRunning()) {
+					logger.log(Level.WARNING, "Exception: " + e.getMessage(), e);
+					logger.warning("exception accepting connection");
 				}
 			}
-			try {
-				closeConnection(socket, os);
-			} catch (Exception e) {
-				logger.error("failed closing connection");
+			if (socket != null) {
+				try {
+					is = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+				} catch (IOException e) {
+					if (smsc.isRunning()) {
+						logger.log(Level.WARNING, "Exception: " + e.getMessage(), e);
+						logger.warning("failure getting input stream");
+					}
+				}
+				try {
+					os = socket.getOutputStream();
+				} catch (IOException e) {
+					if (smsc.isRunning()) {
+						logger.log(Level.WARNING, "Exception: " + e.getMessage(), e);
+						logger.warning("failure getting output stream");
+					}
+				}
+				try {
+					request = readRequest(is);
+				} catch (Exception e) {
+					if (smsc.isRunning()) {
+						logger.log(Level.WARNING, "Exception: " + e.getMessage(), e);
+						logger.warning("failure getting request string");
+					}
+				}
+
+				response = processRequest(request);
+
+				if (responseOK) {
+					try {
+						writeResponse(response, os);
+					} catch (Exception e) {
+					}
+				}
+				try {
+					closeConnection(socket, os);
+				} catch (Exception e) {
+					if (smsc.isRunning()) {
+						logger.log(Level.WARNING, "Exception: " + e.getMessage(), e);
+						logger.warning("failed closing connection");
+					}
+				}
 			}
-		} while (running);
+		} while (smsc.isRunning());
 		logger.info("Halting http server thread ");
 	}
 
@@ -454,8 +468,8 @@ public class HttpHandler implements Runnable {
 		String filename;
 		String command;
 
-		logger.debug("in processHTTPRequest");
-		logger.debug("HTTP Request=" + target);
+		logger.finest("in processHTTPRequest");
+		logger.finest("HTTP Request=" + target);
 
 		int qmark = target.indexOf("?");
 		if (qmark > -1) {
@@ -465,7 +479,7 @@ public class HttpHandler implements Runnable {
 			filename = target.substring(0, target.length());
 			command = "implicit-refresh";
 		}
-		logger.debug("Filename=" + filename);
+		logger.finest("Filename=" + filename);
 
 		boolean authorisedFile = false;
 
@@ -478,8 +492,7 @@ public class HttpHandler implements Runnable {
 				authorisedFile = true;
 				command = "inject";
 			} else
-				logger.debug("Unauthorised file <" + filename
-						+ "> requested - ignoring request");
+				logger.finest("Unauthorised file <" + filename + "> requested - ignoring request");
 		}
 
 		if (!authorisedFile) {
@@ -491,7 +504,7 @@ public class HttpHandler implements Runnable {
 			controlPanelMessage = "";
 			return injectMo(target);
 		}
-		
+
 		if (command.equalsIgnoreCase("stats")) {
 			controlPanelMessage = "";
 			return stats();
@@ -505,17 +518,16 @@ public class HttpHandler implements Runnable {
 			return http400Response;
 		}
 
-		if (filename.endsWith(".gif") || filename.endsWith(".jpg")
-				|| filename.endsWith(".css"))
+		if (filename.endsWith(".gif") || filename.endsWith(".jpg") || filename.endsWith(".css"))
 			command = "plain-get";
 
 		if (filename.equals(SMPPSim.getInjectMoPage())) {
-			logger.debug("The InjectMO page has been requested");
+			logger.finest("The InjectMO page has been requested");
 			command = "implicit-refresh";
 		}
 
-		logger.debug("Generated requestedFile:" + requestedFile);
-		logger.debug("Processing command:" + command);
+		logger.finest("Generated requestedFile:" + requestedFile);
+		logger.finest("Processing command:" + command);
 		try {
 			if (command.equalsIgnoreCase("plain-get")) {
 				return plainResponse(requestedFile);
@@ -543,16 +555,15 @@ public class HttpHandler implements Runnable {
 				return prepareResponse(requestedFile);
 			}
 
-			if (command.equalsIgnoreCase("refresh")
-					|| command.equalsIgnoreCase("implicit-refresh")) {
+			if (command.equalsIgnoreCase("refresh") || command.equalsIgnoreCase("implicit-refresh")) {
 				controlPanelMessage = "";
 				firstStopRequest = true;
 				return prepareResponse(requestedFile);
 			}
 
 		} catch (IOException ioe) {
-			logger.error("IOException preparing http response: "
-					+ ioe.getMessage());
+			logger.log(Level.WARNING, "Exception: " + ioe.getMessage(), ioe);
+			logger.warning("IOException preparing http response: " + ioe.getMessage());
 			responseOK = false;
 			return http500Response;
 		}
@@ -571,21 +582,21 @@ public class HttpHandler implements Runnable {
 		if (filename.indexOf("..") != -1)
 			return null;
 		requestedFile = new File(docRootName + filename);
-		logger.debug("requestedFile=" + requestedFile.getName());
+		logger.finest("requestedFile=" + requestedFile.getName());
 		if (requestedFile.exists() && requestedFile.isDirectory()) {
 
-			logger.debug("Requested file exists and is a directory");
+			logger.finest("Requested file exists and is a directory");
 			// If a directory was requested, modify the request
 			// to look for the default file in that
 			// directory.
 			String defaultFile = docRootName + "index.htm";
-			logger.debug("defaultFile=" + defaultFile);
+			logger.finest("defaultFile=" + defaultFile);
 			requestedFile = new File(defaultFile);
 			try {
-				logger.debug("Requested file got set to default of:"
-						+ requestedFile.getCanonicalPath());
+				logger.finest("Requested file got set to default of:" + requestedFile.getCanonicalPath());
 			} catch (IOException ioe) {
-				logger.error("IOException: " + ioe.getMessage());
+				logger.log(Level.WARNING, "Exception: " + ioe.getMessage(), ioe);
+				logger.warning("IOException: " + ioe.getMessage());
 			}
 		}
 
@@ -597,16 +608,13 @@ public class HttpHandler implements Runnable {
 
 		if (requestedFile.exists()) {
 			int fileLen = (int) requestedFile.length();
-			BufferedInputStream fileIn = new BufferedInputStream(
-					new FileInputStream(requestedFile));
-			String contentType = URLConnection
-					.guessContentTypeFromStream(fileIn);
+			BufferedInputStream fileIn = new BufferedInputStream(new FileInputStream(requestedFile));
+			String contentType = URLConnection.guessContentTypeFromStream(fileIn);
 			if (requestedFile.getAbsolutePath().endsWith(".htm")) {
-				contentType="text/html";
+				contentType = "text/html";
 			}
-			logger.debug("Content Type thought to be:" + contentType);
-			byte[] headerBytes = createHeaderBytes("HTTP/1.0 200 OK", fileLen,
-					contentType);
+			logger.finest("Content Type thought to be:" + contentType);
+			byte[] headerBytes = createHeaderBytes("HTTP/1.0 200 OK", fileLen, contentType);
 			bOut.write(headerBytes);
 			byte[] buf = new byte[2048];
 			int blockLen = 0;
@@ -615,20 +623,19 @@ public class HttpHandler implements Runnable {
 			}
 			fileIn.close();
 		} else {
-			byte[] headerBytes = createHeaderBytes("HTTP/1.0 404 Not Found",
-					-1, null);
+			byte[] headerBytes = createHeaderBytes("HTTP/1.0 404 Not Found", -1, null);
 			bOut.write(headerBytes);
 		}
 		bOut.flush();
 		bOut.close();
-		logger.debug("response prepared - just params to deal with now");
+		logger.finest("response prepared - just params to deal with now");
 		return replaceParams(bOut).getBytes();
 	}
 
 	private String replaceParams(ByteArrayOutputStream bOut) {
-		logger.debug("In replaceParams");
+		logger.finest("In replaceParams");
 		String rawFile = bOut.toString();
-		// logger.debug(rawFile);
+		// logger.finest(rawFile);
 		boolean done = false;
 		int paramStart = 0;
 		int paramEnd = 0;
@@ -640,7 +647,7 @@ public class HttpHandler implements Runnable {
 			paramStart = rawFile.indexOf(delim, p);
 			if (paramStart > -1) {
 				paramEnd = rawFile.indexOf(delim, paramStart + 2) + 2;
-				logger.debug("Found param end at " + paramEnd);
+				logger.finest("Found param end at " + paramEnd);
 				if ((paramStart > -1) && (paramEnd > -1)) {
 					sb.append(rawFile.substring(p, paramStart));
 					param = rawFile.substring(paramStart, paramEnd);
@@ -658,7 +665,7 @@ public class HttpHandler implements Runnable {
 	}
 
 	private String getParamValue(String paramName) {
-		logger.debug("Getting param value for <" + paramName + ">");
+		logger.finest("Getting param value for <" + paramName + ">");
 
 		if (paramName.equals(MESSAGE))
 			return controlPanelMessage;
@@ -854,12 +861,12 @@ public class HttpHandler implements Runnable {
 	private byte[] injectMo(String message) {
 		try {
 			newMessage = parseMoInjectForm(message);
-			logger.debug("made DeliverSM object");
+			logger.finest("made DeliverSM object");
 			smsc.getIq().addMessage(newMessage);
 			controlPanelMessage = "Message added to SMPPSim InboundQueue OK";
 		} catch (InvalidHexStringlException ihse) {
 		} catch (Exception e) {
-			logger.error(e.getMessage());
+			logger.warning(e.getMessage());
 			e.printStackTrace();
 			return http400Response;
 		}
@@ -876,21 +883,21 @@ public class HttpHandler implements Runnable {
 
 	private byte[] stats() {
 
-			ByteArrayOutputStream bOut = new ByteArrayOutputStream();
-			try {
-				byte[] headerBytes = createHeaderBytes("HTTP/1.0 200 OK", -1, null);
-				bOut.write(headerBytes);
-				byte[] buf = new byte[2048];
-				String response = "submittedok="+smsc.getSubmitSmOK()+",deliveredok="+smsc.getDeliverSmOK();
-				bOut.write(response.getBytes());
-				bOut.flush();
-				bOut.close();
-				return bOut.toByteArray();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				return null;
-			}
+		ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+		try {
+			byte[] headerBytes = createHeaderBytes("HTTP/1.0 200 OK", -1, null);
+			bOut.write(headerBytes);
+			byte[] buf = new byte[2048];
+			String response = "submittedok=" + smsc.getSubmitSmOK() + ",deliveredok=" + smsc.getDeliverSmOK();
+			bOut.write(response.getBytes());
+			bOut.flush();
+			bOut.close();
+			return bOut.toByteArray();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
 
 	}
 
@@ -909,12 +916,12 @@ public class HttpHandler implements Runnable {
 
 		i = tmpMessage.indexOf("?");
 		tmpMessage = tmpMessage.substring(i + 1, l);
-		logger.debug("HTTP args:" + tmpMessage);
+		logger.finest("HTTP args:" + tmpMessage);
 
 		StringTokenizer st = new StringTokenizer(tmpMessage, " &\t\n", false);
 		while (st.hasMoreTokens()) {
 			token = st.nextToken();
-//			logger.info(token);
+			//			logger.info(token);
 			StringTokenizer st2 = new StringTokenizer(token, "=", false);
 			while (st2.hasMoreTokens()) {
 				key = st2.nextToken();
@@ -933,32 +940,26 @@ public class HttpHandler implements Runnable {
 			}
 		}
 
-		logger.debug("HTTPHandler: extracted args from GET: "
-				+ args.toString());
+		logger.finest("HTTPHandler: extracted args from GET: " + args.toString());
 
 		if (args.containsKey("data_coding")) {
-			smppmsg.setData_coding(Integer.parseInt(URLDecoder.decode(args
-					.get("data_coding"), "UTF-8")));
+			smppmsg.setData_coding(Integer.parseInt(URLDecoder.decode(args.get("data_coding"), "UTF-8")));
 			data_coding = args.get("data_coding");
 		}
 		shortMessageInHex = false;
 		if (args.containsKey(("format")))
 			shortMessageInHex = true;
 		if (args.containsKey("short_message")) {
-			short_message = URLDecoder.decode(args.get("short_message"),
-					"UTF-8");
+			short_message = URLDecoder.decode(args.get("short_message"), "UTF-8");
 			if (!shortMessageInHex) {
-				String msg = URLDecoder.decode(args.get("short_message"),
-						"UTF-8");
-				String encoding = PduUtilities.getJavaEncoding((byte) smppmsg
-						.getData_coding());
+				String msg = URLDecoder.decode(args.get("short_message"), "UTF-8");
+				String encoding = PduUtilities.getJavaEncoding((byte) smppmsg.getData_coding());
 				if (encoding != null)
 					smppmsg.setShort_message(msg.getBytes(encoding));
 				else
 					smppmsg.setShort_message(msg.getBytes());
 			} else {
-				smppmsg.setShort_message(makeBinaryMessage(URLDecoder.decode(
-						args.get("short_message"), "UTF-8")));
+				smppmsg.setShort_message(makeBinaryMessage(URLDecoder.decode(args.get("short_message"), "UTF-8")));
 			}
 		} else {
 			smppmsg.setShort_message(short_message.getBytes());
@@ -976,66 +977,54 @@ public class HttpHandler implements Runnable {
 			smppmsg.setDestination_addr(dest_addr);
 		}
 		if (args.containsKey("service_type")) {
-			smppmsg.setService_type(URLDecoder.decode(args.get("service_type"),
-					"UTF-8"));
+			smppmsg.setService_type(URLDecoder.decode(args.get("service_type"), "UTF-8"));
 			service_type = args.get("service_type");
 		}
 		if (args.containsKey("source_addr_ton")) {
-			smppmsg.setSource_addr_ton(Integer.parseInt(URLDecoder.decode(args
-					.get("source_addr_ton"), "UTF-8")));
+			smppmsg.setSource_addr_ton(Integer.parseInt(URLDecoder.decode(args.get("source_addr_ton"), "UTF-8")));
 			source_addr_ton = args.get("source_addr_ton");
 		}
 		if (args.containsKey("source_addr_npi")) {
-			smppmsg.setSource_addr_npi(Integer.parseInt(URLDecoder.decode(args
-					.get("source_addr_npi"), "UTF-8")));
+			smppmsg.setSource_addr_npi(Integer.parseInt(URLDecoder.decode(args.get("source_addr_npi"), "UTF-8")));
 			source_addr_npi = args.get("source_addr_npi");
 		}
 		if (args.containsKey("dest_addr_ton")) {
-			smppmsg.setDest_addr_ton(Integer.parseInt(URLDecoder.decode(args
-					.get("dest_addr_ton"), "UTF-8")));
+			smppmsg.setDest_addr_ton(Integer.parseInt(URLDecoder.decode(args.get("dest_addr_ton"), "UTF-8")));
 			dest_addr_ton = args.get("dest_addr_ton");
 		}
 		if (args.containsKey("dest_addr_npi")) {
-			smppmsg.setDest_addr_npi(Integer.parseInt(URLDecoder.decode(args
-					.get("dest_addr_npi"), "UTF-8")));
+			smppmsg.setDest_addr_npi(Integer.parseInt(URLDecoder.decode(args.get("dest_addr_npi"), "UTF-8")));
 			dest_addr_npi = args.get("dest_addr_npi");
 		}
 		if (args.containsKey("esm_class")) {
-			smppmsg.setEsm_class(Integer.parseInt(URLDecoder.decode(args
-					.get("esm_class"), "UTF-8")));
+			smppmsg.setEsm_class(Integer.parseInt(URLDecoder.decode(args.get("esm_class"), "UTF-8")));
 			esm_class = args.get("esm_class");
 		}
 		if (args.containsKey("protocol_ID")) {
-			smppmsg.setProtocol_ID(Integer.parseInt(URLDecoder.decode(args
-					.get("protocol_ID"), "UTF-8")));
+			smppmsg.setProtocol_ID(Integer.parseInt(URLDecoder.decode(args.get("protocol_ID"), "UTF-8")));
 			protocol_id = args.get("protocol_ID");
 		}
 		if (args.containsKey("priority_flag")) {
-			smppmsg.setPriority_flag(Integer.parseInt(URLDecoder.decode(args
-					.get("priority_flag"), "UTF-8")));
+			smppmsg.setPriority_flag(Integer.parseInt(URLDecoder.decode(args.get("priority_flag"), "UTF-8")));
 			priority_flag = args.get("priority_flag");
 		}
 		if (args.containsKey("registered_delivery_flag")) {
-			smppmsg.setRegistered_delivery_flag(Integer.parseInt(URLDecoder
-					.decode(args.get("registered_delivery_flag"), "UTF-8")));
+			smppmsg.setRegistered_delivery_flag(Integer.parseInt(URLDecoder.decode(args.get("registered_delivery_flag"), "UTF-8")));
 			registered_delivery_flag = args.get("registered_delivery_flag");
 		}
 		if (args.containsKey("sm_default_msg_id")) {
-			smppmsg.setSm_default_msg_id(Integer.parseInt(URLDecoder.decode(
-					args.get("sm_default_msg_id"), "UTF-8")));
+			smppmsg.setSm_default_msg_id(Integer.parseInt(URLDecoder.decode(args.get("sm_default_msg_id"), "UTF-8")));
 			sm_default_message_id = args.get("sm_default_msg_id");
 		}
 		if (args.containsKey("sm_length")) {
-			smppmsg.setSm_length(Integer.parseInt(URLDecoder.decode(args
-					.get("sm_length"), "UTF-8")));
+			smppmsg.setSm_length(Integer.parseInt(URLDecoder.decode(args.get("sm_length"), "UTF-8")));
 			sm_length = args.get("sm_length");
 		} else {
 			smppmsg.setSm_length(smppmsg.getShort_message().length);
 			sm_length = "";
 		}
 		if (args.containsKey("user_message_reference")) {
-			smppmsg.setString_user_message_reference(args
-					.get("user_message_reference"));
+			smppmsg.setString_user_message_reference(args.get("user_message_reference"));
 			user_message_reference = args.get("user_message_reference");
 		} else {
 			user_message_reference = "";
@@ -1059,25 +1048,19 @@ public class HttpHandler implements Runnable {
 			sar_msg_ref_num = "";
 		}
 		if (args.containsKey("sar_total_segments")) {
-			smppmsg
-					.setString_sar_total_segments(args
-							.get("sar_total_segments"));
+			smppmsg.setString_sar_total_segments(args.get("sar_total_segments"));
 			sar_total_segments = args.get("sar_total_segments");
 		} else {
 			sar_total_segments = "";
 		}
 		if (args.containsKey("sar_segment_seqnum")) {
-			smppmsg
-					.setString_sar_segment_seqnum(args
-							.get("sar_segment_seqnum"));
+			smppmsg.setString_sar_segment_seqnum(args.get("sar_segment_seqnum"));
 			sar_segment_seqnum = args.get("sar_segment_seqnum");
 		} else {
 			sar_segment_seqnum = "";
 		}
 		if (args.containsKey("user_response_code")) {
-			smppmsg
-					.setString_user_response_code(args
-							.get("user_response_code"));
+			smppmsg.setString_user_response_code(args.get("user_response_code"));
 			user_response_code = args.get("user_response_code");
 		} else {
 			user_response_code = "";
@@ -1119,9 +1102,7 @@ public class HttpHandler implements Runnable {
 			dest_subaddress = "";
 		}
 		if (args.containsKey("language_indicator")) {
-			smppmsg
-					.setString_language_indicator(args
-							.get("language_indicator"));
+			smppmsg.setString_language_indicator(args.get("language_indicator"));
 			language_indicator = args.get("language_indicator");
 		} else {
 			language_indicator = "";
@@ -1201,8 +1182,7 @@ public class HttpHandler implements Runnable {
 		return val;
 	}
 
-	private byte[] makeBinaryMessage(String hex)
-			throws InvalidHexStringlException {
+	private byte[] makeBinaryMessage(String hex) throws InvalidHexStringlException {
 		int i = 0;
 		String hexNoSpaces = Utilities.removeSpaces(hex);
 		hexNoSpaces = hexNoSpaces.toUpperCase();
@@ -1236,13 +1216,10 @@ public class HttpHandler implements Runnable {
 
 		if (requestedFile.exists()) {
 			int fileLen = (int) requestedFile.length();
-			BufferedInputStream fileIn = new BufferedInputStream(
-					new FileInputStream(requestedFile));
-			String contentType = URLConnection
-					.guessContentTypeFromStream(fileIn);
-			logger.debug("Content Type thought to be:" + contentType);
-			byte[] headerBytes = createHeaderBytes("HTTP/1.0 200 OK", fileLen,
-					contentType);
+			BufferedInputStream fileIn = new BufferedInputStream(new FileInputStream(requestedFile));
+			String contentType = URLConnection.guessContentTypeFromStream(fileIn);
+			logger.finest("Content Type thought to be:" + contentType);
+			byte[] headerBytes = createHeaderBytes("HTTP/1.0 200 OK", fileLen, contentType);
 			bOut.write(headerBytes);
 			byte[] buf = new byte[2048];
 			int blockLen = 0;
@@ -1251,8 +1228,7 @@ public class HttpHandler implements Runnable {
 			}
 			fileIn.close();
 		} else {
-			byte[] headerBytes = createHeaderBytes("HTTP/1.0 404 Not Found",
-					-1, null);
+			byte[] headerBytes = createHeaderBytes("HTTP/1.0 404 Not Found", -1, null);
 			bOut.write(headerBytes);
 		}
 		bOut.flush();
@@ -1265,7 +1241,7 @@ public class HttpHandler implements Runnable {
 		if ((requestLine == null) || (requestLine.length() < 1)) {
 			throw new IOException("could not read request");
 		}
-		logger.debug("Received HTTP message:" + requestLine);
+		logger.finest("Received HTTP message:" + requestLine);
 		StringTokenizer st = new StringTokenizer(requestLine);
 		String uri = null;
 
@@ -1277,27 +1253,18 @@ public class HttpHandler implements Runnable {
 		} catch (NoSuchElementException x) {
 			throw new IOException("could not parse request line");
 		}
-		logger.debug("uri=" + uri);
+		logger.finest("uri=" + uri);
 		return uri;
 	}
 
-	private void writeResponse(byte[] response, OutputStream os)
-			throws IOException {
+	private void writeResponse(byte[] response, OutputStream os) throws IOException {
 		os.write(response);
 	}
 
-	private void closeConnection(Socket socket, OutputStream os)
-			throws IOException {
+	private void closeConnection(Socket socket, OutputStream os) throws IOException {
 		os.flush();
 		os.close();
 		socket.close();
-	}
-
-	/**
-	 * @param b
-	 */
-	public void setRunning(boolean b) {
-		running = b;
 	}
 
 	private int leastOf(int a, int b, int c, int d, int e) {
@@ -1312,8 +1279,7 @@ public class HttpHandler implements Runnable {
 		return e;
 	}
 
-	private byte[] createHeaderBytes(String resp, int contentLen,
-			String contentType) throws IOException {
+	private byte[] createHeaderBytes(String resp, int contentLen, String contentType) throws IOException {
 
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(baos));
@@ -1339,5 +1305,25 @@ public class HttpHandler implements Runnable {
 		writer.close();
 
 		return data;
+	}
+
+	public void exit() {
+		logger.info("HTTP Handler exiting");
+		try {
+			ServerSocket css = smsc.getCss();
+			if (css != null && !css.isClosed()) {
+				css.close();
+			}
+			if (is != null) {
+				is.close();
+			}
+			if (os != null) {
+				os.close();
+			}
+			if (socket != null) {
+				socket.close();
+			}
+		} catch (IOException e) {
+		}
 	}
 }

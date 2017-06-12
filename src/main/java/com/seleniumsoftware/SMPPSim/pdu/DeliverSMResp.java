@@ -22,16 +22,15 @@
  * @author martin@seleniumsoftware.com
  * http://www.woolleynet.com
  * http://www.seleniumsoftware.com
- * $Header: /var/cvsroot/SMPPSim2/distribution/2.6.9/SMPPSim/src/java/com/seleniumsoftware/SMPPSim/pdu/DeliverSMResp.java,v 1.1 2012/07/24 14:48:59 martin Exp $
+ * $Header: /var/cvsroot/SMPPSim2/src/java/com/seleniumsoftware/SMPPSim/pdu/DeliverSMResp.java,v 1.5 2011/01/31 08:00:23 martin Exp $
  ****************************************************************************/
 
 package com.seleniumsoftware.SMPPSim.pdu;
 import com.seleniumsoftware.SMPPSim.pdu.util.*;
-import org.slf4j.LoggerFactory;
 
 public class DeliverSMResp extends Request implements Demarshaller {
 
-  private static org.slf4j.Logger logger = LoggerFactory.getLogger(DeliverSMResp.class);
+
 	// PDU attributes
 
 	private String message_id;
@@ -45,7 +44,7 @@ public class DeliverSMResp extends Request implements Demarshaller {
 		try {
 			message_id = PduUtilities.getStringValueFixedLength(request, inx, 1);
 		} catch (Exception e) {
-			logger.debug("DELIVER_SM_RESP PDU is malformed. message_id is incorrect");
+			logger.severe("DELIVER_SM_RESP PDU is malformed. message_id is incorrect");
 			throw (e);
 		}
 

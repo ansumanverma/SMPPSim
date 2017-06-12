@@ -22,7 +22,7 @@
  * @author martin@seleniumsoftware.com
  * http://www.woolleynet.com
  * http://www.seleniumsoftware.com
- * $Header: /var/cvsroot/SMPPSim2/distribution/2.6.9/SMPPSim/src/java/com/seleniumsoftware/SMPPSim/MoService.java,v 1.1 2012/07/24 14:48:59 martin Exp $
+ * $Header: /var/cvsroot/SMPPSim2/src/java/com/seleniumsoftware/SMPPSim/MoService.java,v 1.7 2011/01/31 06:50:13 martin Exp $
  ****************************************************************************
  */
 
@@ -30,16 +30,13 @@ package com.seleniumsoftware.SMPPSim;
 
 import com.seleniumsoftware.SMPPSim.exceptions.InvalidHexStringlException;
 import com.seleniumsoftware.SMPPSim.pdu.*;
-import org.slf4j.Logger;
 
-import org.slf4j.LoggerFactory;
+import java.util.logging.*;
 
 public class MoService implements Runnable {
 
-//	private static Logger logger = Logger.getLogger("com.seleniumsoftware.smppsim");
+	private static Logger logger = Logger.getLogger("com.seleniumsoftware.smppsim");
 
-    private static Logger logger = LoggerFactory.getLogger(MoService.class);
-    
 	private Smsc smsc = Smsc.getInstance();
 
 	private int messagesPerMin;
@@ -60,7 +57,7 @@ public class MoService implements Runnable {
 		try {
 			messages = new MoMessagePool(deliveryFile);
 		} catch (Exception e) {
-			logger.error("Exception creating MoMessagePool. "
+			logger.warning("Exception creating MoMessagePool. "
 					+ e.getMessage());
 			e.printStackTrace();
 		}
@@ -68,7 +65,7 @@ public class MoService implements Runnable {
 		try {
 			runMoService();
 		} catch (Exception e) {
-			logger.error("MO Service threw an Exception:" + e.getMessage()
+			logger.warning("MO Service threw an Exception:" + e.getMessage()
 					+ ". It's game over");
 		}
 	}
@@ -88,7 +85,7 @@ public class MoService implements Runnable {
 			newMessage = messages.getMessage();
 			newMessage.setSm_length(newMessage.getShort_message().length);
 			newMessage.setSeq_no(smsc.getNextSequence_No());
-			logger.debug("MoService: DeliverSM object:"
+			logger.finest("MoService: DeliverSM object:"
 					+ newMessage.toString());
 			smsc.getIq().addMessage(newMessage);
 			count++;
@@ -103,7 +100,7 @@ public class MoService implements Runnable {
 				minCount = 0;
 			}
 			try {
-				logger.debug("MO Service is sleeping for " + sleepMS
+				logger.finest("MO Service is sleeping for " + sleepMS
 						+ " milliseconds");
 				Thread.sleep(sleepMS);
 			} catch (Exception e) {

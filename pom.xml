@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.mycompany</groupId>
-    <artifactId>SMPPSim</artifactId>
+    <artifactId>smppsim</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
@@ -12,6 +12,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+         <docker.image.prefix>ansumanverma</docker.image.prefix>
     </properties>
 
     <dependencies>
@@ -47,12 +48,19 @@
         </dependency>
         
         <!--smpp dependency-->
-        <dependency>
+      <!--  <dependency>
             <groupId>smpp</groupId>
             <artifactId>smpp-lib</artifactId>
             <version>1.3</version>
         </dependency>
-        
+      -->
+      <dependency>
+    <groupId>smpp</groupId>
+    <artifactId>ampp-lib</artifactId>
+    <version>1.3</version>
+    <scope>system</scope>
+    <systemPath>${project.basedir}/lib/smpp.jar</systemPath>
+</dependency>  
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -89,6 +97,31 @@
                     </execution>
                 </executions>
             </plugin>
+             <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>0.4.11</version>
+                <configuration>
+                    <imageName>localhost:5000/${project.artifactId}</imageName>
+                    <dockerDirectory>src/main/docker</dockerDirectory>
+                   <registryUrl>https://localhost:5000</registryUrl>
+                    <serverId>docker</serverId>
+                    <resources>
+                        <resource>
+                            <targetPath>/</targetPath>
+                            <directory>${project.build.directory}</directory>
+                            <include>${project.artifactId}.jar</include>
+                        </resource>
+                         <resource>
+                            <directory>${project.basedir}</directory>
+                            <include>conf/*.*</include>
+                            <include>www.zip</include>
+                        </resource>
+                    
+                    </resources>
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
 </project>

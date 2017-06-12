@@ -22,16 +22,14 @@
  * @author martin@seleniumsoftware.com
  * http://www.woolleynet.com
  * http://www.seleniumsoftware.com
- * $Header: /var/cvsroot/SMPPSim2/distribution/2.6.9/SMPPSim/src/java/com/seleniumsoftware/SMPPSim/pdu/SubmitMulti.java,v 1.1 2012/07/24 14:48:58 martin Exp $
+ * $Header: /var/cvsroot/SMPPSim2/src/java/com/seleniumsoftware/SMPPSim/pdu/SubmitMulti.java,v 1.6 2011/01/31 08:00:23 martin Exp $
  ****************************************************************************/
 
 package com.seleniumsoftware.SMPPSim.pdu;
 import com.seleniumsoftware.SMPPSim.pdu.util.*;
-import org.slf4j.LoggerFactory;
 
 public class SubmitMulti extends Request implements Demarshaller {
 
-    private static org.slf4j.Logger logger = LoggerFactory.getLogger(SubmitMulti.class);
 	// PDU attributes
 
 	private String service_type;
@@ -67,7 +65,7 @@ public class SubmitMulti extends Request implements Demarshaller {
 				PduConstants.C_OCTET_STRING_TYPE);
 		} catch (Exception e) {
 			logger
-					.debug("SUBMIT_MULTI PDU is malformed. service_type is incorrect");
+					.severe("SUBMIT_MULTI PDU is malformed. service_type is incorrect");
 			throw (e);
 		}	
 		inx = inx + service_type.length() + 1;
@@ -75,7 +73,7 @@ public class SubmitMulti extends Request implements Demarshaller {
 		source_addr_ton = PduUtilities.getIntegerValue(request, inx, 1);
 		} catch (Exception e) {
 			logger
-					.debug("SUBMIT_MULTI PDU is malformed. source_addr_ton is incorrect");
+					.severe("SUBMIT_MULTI PDU is malformed. source_addr_ton is incorrect");
 			throw (e);
 		}	
 		inx = inx + 1;
@@ -83,7 +81,7 @@ public class SubmitMulti extends Request implements Demarshaller {
 		source_addr_npi = PduUtilities.getIntegerValue(request, inx, 1);
 		} catch (Exception e) {
 			logger
-					.debug("SUBMIT_MULTI PDU is malformed. source_addr_npi is incorrect");
+					.severe("SUBMIT_MULTI PDU is malformed. source_addr_npi is incorrect");
 			throw (e);
 		}	
 		inx = inx + 1;
@@ -96,7 +94,7 @@ public class SubmitMulti extends Request implements Demarshaller {
 				PduConstants.C_OCTET_STRING_TYPE);
 		} catch (Exception e) {
 			logger
-					.debug("SUBMIT_MULTI PDU is malformed. source_addr is incorrect");
+					.severe("SUBMIT_MULTI PDU is malformed. source_addr is incorrect");
 			throw (e);
 		}	
 		inx = inx + source_addr.length() + 1;
@@ -104,7 +102,7 @@ public class SubmitMulti extends Request implements Demarshaller {
 		number_of_dests = PduUtilities.getIntegerValue(request, inx, 1);
 		} catch (Exception e) {
 			logger
-					.debug("SUBMIT_MULTI PDU is malformed. number_of_dests is incorrect");
+					.severe("SUBMIT_MULTI PDU is malformed. number_of_dests is incorrect");
 			throw (e);
 		}	
 		dest_addresses = new DestAddress[number_of_dests];
@@ -115,7 +113,7 @@ public class SubmitMulti extends Request implements Demarshaller {
 			dest_flag = PduUtilities.getIntegerValue(request, inx, 1);
 			} catch (Exception e) {
 				logger
-						.debug("SUBMIT_MULTI PDU is malformed. dest_flag at "+inx+" is incorrect");
+						.severe("SUBMIT_MULTI PDU is malformed. dest_flag at "+inx+" is incorrect");
 				throw (e);
 			}	
 			inx++;
@@ -126,7 +124,7 @@ public class SubmitMulti extends Request implements Demarshaller {
 				sme.setSme_ton(PduUtilities.getIntegerValue(request, inx, 1));
 				} catch (Exception e) {
 					logger
-							.debug("SUBMIT_MULTI PDU is malformed. sme ton at position "+inx+" is incorrect");
+							.severe("SUBMIT_MULTI PDU is malformed. sme ton at position "+inx+" is incorrect");
 					throw (e);
 				}	
 				inx++;
@@ -134,7 +132,7 @@ public class SubmitMulti extends Request implements Demarshaller {
 				sme.setSme_npi(PduUtilities.getIntegerValue(request, inx, 1));
 				} catch (Exception e) {
 					logger
-							.debug("SUBMIT_MULTI PDU is malformed. sme_npi at position "+inx+" is incorrect");
+							.severe("SUBMIT_MULTI PDU is malformed. sme_npi at position "+inx+" is incorrect");
 					throw (e);
 				}	
 				inx++;
@@ -147,7 +145,7 @@ public class SubmitMulti extends Request implements Demarshaller {
 						PduConstants.C_OCTET_STRING_TYPE));
 				} catch (Exception e) {
 					logger
-							.debug("SUBMIT_MULTI PDU is malformed. sme_address at position "+inx+" is incorrect");
+							.severe("SUBMIT_MULTI PDU is malformed. sme_address at position "+inx+" is incorrect");
 					throw (e);
 				}	
 				inx = inx + sme.getSme_address().length() + 1;
@@ -164,7 +162,7 @@ public class SubmitMulti extends Request implements Demarshaller {
 						PduConstants.C_OCTET_STRING_TYPE));
 				} catch (Exception e) {
 					logger
-							.debug("SUBMIT_MULTI PDU is malformed. dist_list_name at position "+inx+" is incorrect");
+							.severe("SUBMIT_MULTI PDU is malformed. dist_list_name at position "+inx+" is incorrect");
 					throw (e);
 				}	
 				inx = inx + dl.getDl_name().length() + 1;
@@ -176,7 +174,7 @@ public class SubmitMulti extends Request implements Demarshaller {
 		esm_class = PduUtilities.getIntegerValue(request, inx, 1);
 		} catch (Exception e) {
 			logger
-					.debug("SUBMIT_MULTI PDU is malformed. esm_class at position "+inx+" is incorrect");
+					.severe("SUBMIT_MULTI PDU is malformed. esm_class at position "+inx+" is incorrect");
 			throw (e);
 		}	
 		inx = inx + 1;
@@ -184,7 +182,7 @@ public class SubmitMulti extends Request implements Demarshaller {
 		protocol_ID = PduUtilities.getIntegerValue(request, inx, 1);
 		} catch (Exception e) {
 			logger
-					.debug("SUBMIT_MULTI PDU is malformed. protocol_id at position "+inx+" is incorrect");
+					.severe("SUBMIT_MULTI PDU is malformed. protocol_id at position "+inx+" is incorrect");
 			throw (e);
 		}	
 		inx = inx + 1;
@@ -192,7 +190,7 @@ public class SubmitMulti extends Request implements Demarshaller {
 		priority_flag = PduUtilities.getIntegerValue(request, inx, 1);
 		} catch (Exception e) {
 			logger
-					.debug("SUBMIT_MULTI PDU is malformed. priority_flag at position "+inx+" is incorrect");
+					.severe("SUBMIT_MULTI PDU is malformed. priority_flag at position "+inx+" is incorrect");
 			throw (e);
 		}	
 		inx = inx + 1;
@@ -205,7 +203,7 @@ public class SubmitMulti extends Request implements Demarshaller {
 				PduConstants.C_OCTET_STRING_TYPE);
 		} catch (Exception e) {
 			logger
-					.debug("SUBMIT_MULTI PDU is malformed. schedule_delivery_time at position "+inx+" is incorrect");
+					.severe("SUBMIT_MULTI PDU is malformed. schedule_delivery_time at position "+inx+" is incorrect");
 			throw (e);
 		}	
 		inx = inx + schedule_delivery_time.length() + 1;
@@ -218,7 +216,7 @@ public class SubmitMulti extends Request implements Demarshaller {
 				PduConstants.C_OCTET_STRING_TYPE);
 		} catch (Exception e) {
 			logger
-					.debug("SUBMIT_MULTI PDU is malformed. validity_period at position "+inx+" is incorrect");
+					.severe("SUBMIT_MULTI PDU is malformed. validity_period at position "+inx+" is incorrect");
 			throw (e);
 		}	
 		inx = inx + validity_period.length() + 1;

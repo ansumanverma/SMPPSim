@@ -22,7 +22,7 @@
  * @author martin@seleniumsoftware.com
  * http://www.woolleynet.com
  * http://www.seleniumsoftware.com
- * $Header: /var/cvsroot/SMPPSim2/distribution/2.6.9/SMPPSim/src/java/com/seleniumsoftware/SMPPSim/Session.java,v 1.1 2012/07/24 14:49:00 martin Exp $
+ * $Header: /var/cvsroot/SMPPSim2/src/java/com/seleniumsoftware/SMPPSim/Session.java,v 1.5 2012/07/05 16:53:27 martin Exp $
  ****************************************************************************/
 
 package com.seleniumsoftware.SMPPSim;

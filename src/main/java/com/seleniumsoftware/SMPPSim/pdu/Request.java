@@ -22,31 +22,28 @@
  * @author martin@seleniumsoftware.com
  * http://www.woolleynet.com
  * http://www.seleniumsoftware.com
- * $Header: /var/cvsroot/SMPPSim2/distribution/2.6.9/SMPPSim/src/java/com/seleniumsoftware/SMPPSim/pdu/Request.java,v 1.1 2012/07/24 14:48:58 martin Exp $
+ * $Header: /var/cvsroot/SMPPSim2/src/java/com/seleniumsoftware/SMPPSim/pdu/Request.java,v 1.5 2011/01/31 08:00:23 martin Exp $
  ****************************************************************************/
 
 package com.seleniumsoftware.SMPPSim.pdu;
 
 import com.seleniumsoftware.SMPPSim.pdu.util.PduUtilities;
-import org.slf4j.LoggerFactory;
 
 abstract public class Request extends Pdu implements Demarshaller {
 
-    private static org.slf4j.Logger logger = LoggerFactory.getLogger(Request.class);
-    
 	public void demarshall(byte[] request) throws Exception {
 		int inx = 0;
 		try {
 			setCmd_len(PduUtilities.getIntegerValue(request, inx, 4));
 		} catch (Exception e) {
-			logger.debug("SMPP header PDU is malformed. cmd_len is incorrect");
+			logger.severe("SMPP header PDU is malformed. cmd_len is incorrect");
 			throw (e);
 		}
 		inx = inx + 4;
 		try {
 			setCmd_id(PduUtilities.getIntegerValue(request, inx, 4));
 		} catch (Exception e) {
-			logger.debug("SMPP header PDU is malformed. cmd_id is incorrect");
+			logger.severe("SMPP header PDU is malformed. cmd_id is incorrect");
 			throw (e);
 		}
 		inx = inx + 4;
@@ -54,14 +51,14 @@ abstract public class Request extends Pdu implements Demarshaller {
 			setCmd_status(PduUtilities.getIntegerValue(request, inx, 4));
 		} catch (Exception e) {
 			logger
-					.debug("SMPP header PDU is malformed. cmd_status is incorrect");
+					.severe("SMPP header PDU is malformed. cmd_status is incorrect");
 			throw (e);
 		}
 		inx = inx + 4;
 		try {
 			setSeq_no(PduUtilities.getIntegerValue(request, inx, 4));
 		} catch (Exception e) {
-			logger.debug("SMPP header PDU is malformed. seq_no is incorrect");
+			logger.severe("SMPP header PDU is malformed. seq_no is incorrect");
 			throw (e);
 		}
 		inx = inx + 4;

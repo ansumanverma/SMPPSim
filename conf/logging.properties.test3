@@ -34,9 +34,9 @@ handlers= java.util.logging.FileHandler, java.util.logging.ConsoleHandler
 ############################################################
 
 # default file output is in user's home directory.
-java.util.logging.FileHandler.pattern = ./smppsim%u.log
+java.util.logging.FileHandler.pattern = ./test/test3/smppsim%u.log
 java.util.logging.FileHandler.limit = 5000000
-java.util.logging.FileHandler.count = 10
+java.util.logging.FileHandler.count = 1
 # java.util.logging.FileHandler.formatter = java.util.logging.XMLFormatter
 java.util.logging.FileHandler.formatter = com.seleniumsoftware.SMPPSim.LogFormatter
 

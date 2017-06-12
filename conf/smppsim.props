@@ -1,8 +1,8 @@
 # SMPP_PORT specified the port that SMPPSim will listen on for connections from SMPP
 # clients. SMPP_CONNECTION_HANDLERS determines the maximum number of client connections
 # that can be handled concurrently.
-SMPP_PORT=5555
-SMPP_CONNECTION_HANDLERS=1
+SMPP_PORT=2775
+SMPP_CONNECTION_HANDLERS=10
 
 # Specify the classes that imlement connection and protocol handling respectively here.
 # Such classes *must* be subclasses of com.seleniumsoftware.SMPPSim.ConnectionHandler and com.seleniumsoftware.SMPPSim.SMPPProtocolHandler respectively
@@ -19,7 +19,6 @@ LIFE_CYCLE_MANAGER=com.seleniumsoftware.SMPPSim.LifeCycleManager
 # The Deterministic Lifecycle Manager sets message state according to the first character of the message destination address:
 # 1=EXPIRED,2=DELETED,3=UNDELIVERABLE,4=ACCEPTED,5=REJECTED, other=DELIVERED
 # LIFE_CYCLE_MANAGER=com.seleniumsoftware.SMPPSim.DeterministicLifeCycleManager
-
 # LifeCycleManager parameters
 #
 # Check and possibly change the state of messages in the OutboundQueue every n milliseconds
@@ -64,13 +63,13 @@ AUTHORISED_FILES=/css/style.css,/index.htm,/inject_mo.htm,/favicon.ico,/images/l
 INJECT_MO_PAGE=/inject_mo.htm
 
 # Account details. Comma seperate. SystemID and Password provided in Binds will be validated against these credentials.
-SYSTEM_IDS=pavel
-PASSWORDS=wpsd
+SYSTEM_IDS=smppclient1,smppclient2
+PASSWORDS=password,password
 OUTBIND_ENABLED=false
 OUTBIND_ESME_IP_ADDRESS=127.0.0.1
-OUTBIND_ESME_PORT=5555
-OUTBIND_ESME_SYSTEMID=pavel
-OUTBIND_ESME_PASSWORD=wpsd
+OUTBIND_ESME_PORT=2776
+OUTBIND_ESME_SYSTEMID=smppclient1
+OUTBIND_ESME_PASSWORD=password
 
 # MO SERVICE
 DELIVERY_MESSAGES_PER_MINUTE=0
@@ -84,8 +83,8 @@ ESME_TO_ESME=false
 
 # QUEUES
 # Maximum size parameters are expressed as max number of objects the queue can hold
-OUTBOUND_QUEUE_MAX_SIZE=20000
-INBOUND_QUEUE_MAX_SIZE=20000
+OUTBOUND_QUEUE_MAX_SIZE=1000
+INBOUND_QUEUE_MAX_SIZE=1000
 
 # The delayed inbound queue holds DELIVER_SM (MO) messages which could not be delivered to the selected ESME
 # because it replied "queue full". Such messages get stored in the delayed inbound queue and delivery is attempted again
@@ -180,6 +179,4 @@ DELIVERY_RECEIPT_TLV=1403/0A/34343132333435363738
 
 # MISC
 SMSCID=SMPPSim
-
-#Comma-Separated (regex-based) phone numbers to which any SMS sent would be marked as UNDELIVERED.
-UNDELIVERABLE_PHONE_NUMBERS=999999900[1-2]
+SIMULATE_VARIABLE_SUBMIT_SM_RESPONSE_TIMES=false

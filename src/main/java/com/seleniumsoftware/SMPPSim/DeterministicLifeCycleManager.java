@@ -22,32 +22,32 @@
  * @author martin@seleniumsoftware.com
  * http://www.woolleynet.com
  * http://www.seleniumsoftware.com
- * $Header: /var/cvsroot/SMPPSim2/distribution/2.6.9/SMPPSim/src/java/com/seleniumsoftware/SMPPSim/DeterministicLifeCycleManager.java,v 1.1 2012/07/24 14:49:00 martin Exp $
+ * $Header: /var/cvsroot/SMPPSim2/src/java/com/seleniumsoftware/SMPPSim/DeterministicLifeCycleManager.java,v 1.7 2012/11/12 19:09:59 martin Exp $
  ****************************************************************************/
 
 package com.seleniumsoftware.SMPPSim;
 
 import com.seleniumsoftware.SMPPSim.pdu.*;
-import org.slf4j.Logger;
 
-import org.slf4j.LoggerFactory;
+import java.util.logging.*;
 
 public class DeterministicLifeCycleManager extends LifeCycleManager {
 
-    private static Logger logger = LoggerFactory.getLogger(DeterministicLifeCycleManager.class);
-//	private static Logger logger = Logger.getLogger("com.seleniumsoftware.smppsim");
+	private static Logger logger = Logger.getLogger("com.seleniumsoftware.smppsim");
+
 	private Smsc smsc = Smsc.getInstance();
+
 	private int discardThreshold;
 
 	public DeterministicLifeCycleManager() {
 		discardThreshold = SMPPSim.getDiscardFromQueueAfter();
-		logger.debug("discardThreshold=" + discardThreshold);
+		logger.finest("discardThreshold=" + discardThreshold);
 	}
 
 	public MessageState setState(MessageState m) {
 		// Should a transition take place at all?
 		if (isTerminalState(m.getState()))
-			return m;	
+			return m;
 		byte currentState = m.getState();
 		String dest = m.getPdu().getDestination_addr();
 		if (dest.substring(0, 1).equals("1")) {
@@ -73,17 +73,15 @@ public class DeterministicLifeCycleManager extends LifeCycleManager {
 			m.setFinal_time(System.currentTimeMillis());
 			// If delivery receipt requested prepare it....
 			SubmitSM p = m.getPdu();
-			if (p.getRegistered_delivery_flag() == 1 &&
-			    currentState != m.getState()) {
-				// delivery_receipt requested
-				//logger.info("Delivery Receipt requested");
-				smsc.prepareDeliveryReceipt(
-					p,
-					m.getMessage_id(),
-					m.getState(),
-					1,
-					1,
-					m.getErr());
+			logger.info("Message:"+p.getSeq_no()+" state="+getStateName(m.getState()));
+			if (p.getRegistered_delivery_flag() == 1 && currentState != m.getState()) {
+				prepDeliveryReceipt(m, p);
+			} else {
+				if (p.getRegistered_delivery_flag() == 2 && currentState != m.getState()) {
+					if (isFailure(m.getState())) {
+						prepDeliveryReceipt(m, p);
+					}
+				}
 			}
 		}
 		return m;

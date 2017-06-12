@@ -22,7 +22,7 @@
  * @author martin@seleniumsoftware.com
  * http://www.woolleynet.com
  * http://www.seleniumsoftware.com
- * $Header: /var/cvsroot/SMPPSim2/distribution/2.6.9/SMPPSim/src/java/com/seleniumsoftware/SMPPSim/MoMessagePool.java,v 1.1 2012/07/24 14:49:00 martin Exp $
+ * $Header: /var/cvsroot/SMPPSim2/src/java/com/seleniumsoftware/SMPPSim/MoMessagePool.java,v 1.9 2011/12/10 16:11:10 martin Exp $
  ****************************************************************************/
 
 package com.seleniumsoftware.SMPPSim;
@@ -32,15 +32,12 @@ import com.seleniumsoftware.SMPPSim.pdu.*;
 import com.seleniumsoftware.SMPPSim.util.Utilities;
 
 import java.util.*;
+import java.util.logging.*;
 import java.io.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class MoMessagePool {
 
-    private static Logger logger = LoggerFactory.getLogger(MoMessagePool.class);
-    
-//	private static Logger logger = Logger.getLogger("com.seleniumsoftware.smppsim");
+	private static Logger logger = Logger.getLogger("com.seleniumsoftware.smppsim");
 
 	private Vector<DeliverSM> messages;
 
@@ -66,7 +63,7 @@ public class MoMessagePool {
 		try {
 			messagesReader = new BufferedReader(new FileReader(filename));
 		} catch (FileNotFoundException fnfe) {
-			logger.error("MoMessagePool: file not found: " + filename);
+			logger.warning("MoMessagePool: file not found: " + filename);
 			fnfe.printStackTrace();
 		}
 
@@ -78,16 +75,16 @@ public class MoMessagePool {
 					therecord = "null";
 				else
 					therecord = record;
-				logger.debug("Read from file:<" + therecord + ">");
+				logger.finest("Read from file:<" + therecord + ">");
 				if (record != null) {
 					msg = new DeliverSM();
 					try {
 						getMessageAttributes(record);
 					} catch (Exception e) {
 						logger
-								.error("Error processing delivery_messages file, record number"
+								.warning("Error processing delivery_messages file, record number"
 										+ (recno + 1));
-						logger.error(e.getMessage());
+						logger.warning(e.getMessage());
 						e.printStackTrace();
 						continue;
 					}
@@ -97,16 +94,16 @@ public class MoMessagePool {
 					msg.setData_coding(data_coding);
 					messages.add(msg);
 					recno++;
-					logger.debug("Added delivery_message: " + source_addr
+					logger.finest("Added delivery_message: " + source_addr
 							+ "," + destination_addr + "," + short_message);
 				}
 			} catch (Exception e) {
-				logger.error("Error processing delivery_messages file");
+				logger.warning("Error processing delivery_messages file");
 				logger.info(e.getMessage());
 				e.printStackTrace();
 			}
 		} while (record != null);
-		logger.debug("loaded " + recno + " delivery messages");
+		logger.finest("loaded " + recno + " delivery messages");
 	}
 
 	private void getMessageAttributes(String rec) throws Exception {
@@ -128,7 +125,7 @@ public class MoMessagePool {
 						short_message = Utilities.getByteArrayFromHexString(msg.substring(2));
 						data_coding = 4; // binary
 					} catch (InvalidHexStringlException e) {
-						logger.error("Invalid hex string in MO service input file: <"+msg+">. Used as plain text instead.");
+						logger.warning("Invalid hex string in MO service input file: <"+msg+">. Used as plain text instead.");
 						short_message = msg.getBytes();
 					}
 				}
@@ -146,7 +143,7 @@ public class MoMessagePool {
 
 	protected DeliverSM getMessage() {
 		int messageIX = (int) (Math.random() * recno);
-		logger.debug("Selected delivery_message #" + messageIX);
+		logger.finest("Selected delivery_message #" + messageIX);
 		DeliverSM dsm = new DeliverSM();
 		DeliverSM selected = messages.elementAt(messageIX);
 		;

@@ -22,22 +22,21 @@
  * @author martin@seleniumsoftware.com
  * http://www.woolleynet.com
  * http://www.seleniumsoftware.com
- * $Header: /var/cvsroot/SMPPSim2/distribution/2.6.9/SMPPSim/src/java/com/seleniumsoftware/SMPPSim/CallbackServerConnector.java,v 1.1 2012/07/24 14:48:59 martin Exp $
+ * $Header: /var/cvsroot/SMPPSim2/src/java/com/seleniumsoftware/SMPPSim/CallbackServerConnector.java,v 1.5 2011/01/31 06:50:13 martin Exp $
  ****************************************************************************/
 
 package com.seleniumsoftware.SMPPSim;
 
+import java.io.OutputStream;
 import java.net.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.util.logging.*;
 
 public class CallbackServerConnector implements Runnable {
 
 	private Smsc smsc = Smsc.getInstance();
 
-//	private static Logger logger = Logger.getLogger("com.seleniumsoftware.smppsim");
-    private static Logger logger = LoggerFactory.getLogger(CallbackServerConnector.class);
+	private static Logger logger = Logger.getLogger("com.seleniumsoftware.smppsim");
+
 	private Object mutex;
 
 	public CallbackServerConnector(Object mutex) {

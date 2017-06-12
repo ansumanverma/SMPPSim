@@ -32,7 +32,7 @@ import com.seleniumsoftware.SMPPSim.*;
  * @author Jean-Cedric Desrochers
  * http://www.woolleynet.com
  * http://www.seleniumsoftware.com
- * $Header: /var/cvsroot/SMPPSim2/distribution/2.6.9/SMPPSim/src/java/com/seleniumsoftware/SMPPSim/pdu/DataSMResp.java,v 1.1 2012/07/24 14:48:59 martin Exp $
+ * $Header: /var/cvsroot/SMPPSim2/src/java/com/seleniumsoftware/SMPPSim/pdu/DataSMResp.java,v 1.6 2011/01/31 08:00:23 martin Exp $
  ****************************************************************************/
 
 public class DataSMResp extends Response implements Marshaller, Demarshaller {

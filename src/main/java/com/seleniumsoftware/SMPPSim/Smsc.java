@@ -22,7 +22,7 @@
  * @author martin@seleniumsoftware.com
  * http://www.woolleynet.com
  * http://www.seleniumsoftware.com
- * $Header: /var/cvsroot/SMPPSim2/distribution/2.6.9/SMPPSim/src/java/com/seleniumsoftware/SMPPSim/Smsc.java,v 1.1 2012/07/24 14:48:59 martin Exp $
+ * $Header: /var/cvsroot/SMPPSim2/src/java/com/seleniumsoftware/SMPPSim/Smsc.java,v 1.22 2014/05/25 10:42:26 martin Exp $
  ****************************************************************************/
 
 package com.seleniumsoftware.SMPPSim;
@@ -34,17 +34,19 @@ import com.seleniumsoftware.SMPPSim.util.*;
 
 import java.util.*;
 import java.text.*;
+import java.util.logging.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.OutputStream;
 import java.net.*;
-import org.slf4j.LoggerFactory;
 
 public class Smsc {
 
 	private static Smsc smsc;
+	
+	private boolean running = false;
 
 	private static Socket callback;
 
@@ -52,8 +54,7 @@ public class Smsc {
 
 	private static boolean callback_server_online = false;
 
-    private static org.slf4j.Logger logger = LoggerFactory.getLogger(OutboundQueue.class);
-//	private static Logger logger = Logger.getLogger("com.seleniumsoftware.smppsim");
+	private static Logger logger = Logger.getLogger("com.seleniumsoftware.smppsim");
 
 	private static long message_id = 0;
 
@@ -76,12 +77,16 @@ public class Smsc {
 	private MoService ds;
 
 	private Thread deliveryService;
+	
+	private Thread delayedInboundQueueThread;
 
 	private InboundQueue iq;
-
+	
 	private OutboundQueue oq;
-
+	
 	private DelayedDrQueue drq;
+	
+	private Thread drq_thread;
 
 	private LifeCycleManager lcm;
 
@@ -91,7 +96,7 @@ public class Smsc {
 
 	private int inbound_queue_capacity = 100;
 
-	private int outbound_queue_capacity = 20000;
+	private int outbound_queue_capacity = 100;
 
 	// PDU capture
 
@@ -194,6 +199,8 @@ public class Smsc {
 
 	public void start() throws Exception {
 
+		running = true;
+		
 		startTime = new Date();
 		SimpleDateFormat df = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss");
 		startTimeString = df.format(startTime);
@@ -244,19 +251,17 @@ public class Smsc {
 
 		Thread smppThread[] = new Thread[SMPPSim.getMaxConnectionHandlers()];
 		int threadIndex = 0;
-		connectionHandlers = new StandardConnectionHandler[SMPPSim
-				.getMaxConnectionHandlers()];
+		connectionHandlers = new StandardConnectionHandler[SMPPSim.getMaxConnectionHandlers()];
 		try {
 			smpp_ss = new ServerSocket(SMPPSim.getSmppPort(), 10);
 		} catch (Exception e) {
-			logger.debug("Exception creating SMPP server: " + e.toString());
+			logger.severe("Exception creating SMPP server: " + e.toString());
 			e.printStackTrace();
 			throw e;
 		}
 		for (int i = 0; i < SMPPSim.getMaxConnectionHandlers(); i++) {
 			Class c = Class.forName(SMPPSim.getConnectionHandlerClassName());
-			StandardConnectionHandler ch = (StandardConnectionHandler) c
-					.newInstance();
+			StandardConnectionHandler ch = (StandardConnectionHandler) c.newInstance();
 			ch.setSs(smpp_ss);
 			connectionHandlers[threadIndex] = ch;
 			smppThread[threadIndex] = new Thread(
@@ -268,7 +273,7 @@ public class Smsc {
 		try {
 			css = new ServerSocket(SMPPSim.getHTTPPort(), 10);
 		} catch (Exception e) {
-			logger.error("Exception creating HTTP server: " + e.toString());
+			logger.warning("Exception creating HTTP server: " + e.toString());
 			e.printStackTrace();
 		}
 		Thread cthread[] = new Thread[SMPPSim.getHTTPThreads()];
@@ -295,8 +300,8 @@ public class Smsc {
 		if (SMPPSim.getDelayReceiptsBy() > 0) {
 			logger.info("Starting delivery receipts delay service....");
 			drq = DelayedDrQueue.getInstance();
-			Thread t = new Thread(drq);
-			t.start();
+			drq_thread = new Thread(drq);
+			drq_thread.start();
 		}
 	}
 
@@ -387,8 +392,8 @@ public class Smsc {
 			return r;
 		}
 		logger
-				.debug("Laws of physics violated. Well laws of logic anyway. Fell through conditions in smsc.cancelSm");
-		logger.debug("Request is:" + q.toString());
+				.severe("Laws of physics violated. Well laws of logic anyway. Fell through conditions in smsc.cancelSm");
+		logger.severe("Request is:" + q.toString());
 		throw new InternalException(
 				"Laws of physics violated. Well laws of logic anyway. Fell through conditions in smsc.cancelSm");
 	}
@@ -477,7 +482,7 @@ public class Smsc {
 	public StandardConnectionHandler selectReceiver(String address) {
 		boolean gotReceiver = false;
 		int receiversChecked = 0;
-		logger.debug("Smsc: selectReceiver");
+		logger.finest("Smsc: selectReceiver");
 		do {
 			receiverIndex = getNextReceiverIndex();
 			if ((connectionHandlers[receiverIndex].isBound())
@@ -491,11 +496,12 @@ public class Smsc {
 		} while ((!gotReceiver)
 				&& (receiversChecked <= SMPPSim.getMaxConnectionHandlers()));
 
-		logger.debug("Smsc: Using SMPPReceiver object #" + receiverIndex);
+		logger.finest("Smsc: Using SMPPReceiver object #" + receiverIndex);
 		if (gotReceiver) {
 			return connectionHandlers[receiverIndex];
 		} else {
-			//logger.error("Smsc: No receiver for message address to "+ address);
+			logger.warning("Smsc: No receiver for message address to "
+					+ address);
 			return null;
 		}
 	}
@@ -532,7 +538,7 @@ public class Smsc {
 			outbindOK++;
 			outbind_sent = true;
 		} catch (Exception e) {
-			logger.error("Attempted outbind failed. Check IP address and port are correct for outbind. Exception of type "+e.getClass().getName());
+			logger.warning("Attempted outbind failed. Check IP address and port are correct for outbind. Exception of type "+e.getClass().getName());
 			outbindERR++;
 		}
 	}
@@ -563,7 +569,7 @@ public class Smsc {
 			receipt.addVsop(SMPPSim.getDlr_tlv_tag(), SMPPSim.getDlr_tlv_len(), SMPPSim.getDlr_tlv_value());
 		}
 		
-		logger.debug("sm_len=" + smppmsg.getSm_length() + ",message="
+		logger.finest("sm_len=" + smppmsg.getSm_length() + ",message="
 				+ smppmsg.getShort_message());
 		if (smppmsg.getSm_length() > 19)
 			receipt.setText(new String(smppmsg.getShort_message(),0, 20));
@@ -579,7 +585,8 @@ public class Smsc {
 				drq.delayDeliveryReceipt(receipt);
 			}
 		} catch (InboundQueueFullException e) {
-			//logger.error("Failed to create delivery receipt because the Inbound Queue is full");
+			logger
+					.warning("Failed to create delivery receipt because the Inbound Queue is full");
 		}
 	}
 
@@ -595,7 +602,7 @@ public class Smsc {
 	public byte[] processDeliveryReceipt(DeliveryReceipt smppmsg)
 			throws Exception {
 		byte[] message;
-		logger.debug(": DELIVER_SM (receipt)");
+		logger.finest(": DELIVER_SM (receipt)");
 		message = smppmsg.marshall();
 		LoggingUtilities.hexDump("DELIVER_SM (receipt):", message,
 				message.length);
@@ -622,7 +629,28 @@ public class Smsc {
 	}
 
 	public void stop() {
-		// TODO implement stop action
+		logger.info("Shutting down SMPPSim");
+		running = false;
+		stopMoService();
+		int http_count = SMPPSim.getHTTPThreads();
+		for (int i = 0; i < http_count; i++) {
+			httpcontrollers[i].exit();
+		}
+		for (int i = 0; i < SMPPSim.getMaxConnectionHandlers(); i++) {
+			connectionHandlers[i].exit();
+		}
+		if (delayedInboundQueueThread != null) {
+			delayedInboundQueueThread.interrupt();
+		}
+		if (drq_thread != null) {
+			drq_thread.interrupt();
+		}
+		if (lifecycleService != null) {
+			lifecycleService.interrupt();
+		}
+		if (inboundQueueService != null) {
+			inboundQueueService.interrupt();
+		}
 	}
 
 	public void writeBinarySme(byte[] request) throws IOException {
@@ -1142,7 +1170,7 @@ public class Smsc {
 	}
 
 	private void callback(byte[] pdu, byte[] type) {
-		logger.debug("callback - start of operation");
+		logger.finest("callback - start of operation");
 		if (pdu == null)
 			return;
 		if (type == null)
@@ -1184,7 +1212,7 @@ public class Smsc {
 				}
 			}
 		}
-		logger.debug("callback - end of operation");
+		logger.finest("callback - end of operation");
 	}
 
 	public static synchronized boolean isCallback_server_online() {
@@ -1235,6 +1263,22 @@ public class Smsc {
 
 	public void setOutbindOK(long outbindOK) {
 		this.outbindOK = outbindOK;
+	}
+
+	public boolean isRunning() {
+		return running;
+	}
+
+	public void setRunning(boolean running) {
+		this.running = running;
+	}
+
+	public Thread getDelayedInboundQueueThread() {
+		return delayedInboundQueueThread;
+	}
+
+	public void setDelayedInboundQueueThread(Thread delayedInboundQueueThread) {
+		this.delayedInboundQueueThread = delayedInboundQueueThread;
 	}
 
 }

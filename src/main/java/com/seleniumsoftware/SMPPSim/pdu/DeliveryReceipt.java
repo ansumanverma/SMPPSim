@@ -22,23 +22,19 @@
  * @author martin@seleniumsoftware.com
  * http://www.woolleynet.com
  * http://www.seleniumsoftware.com
- * $Header: /var/cvsroot/SMPPSim2/distribution/2.6.9/SMPPSim/src/java/com/seleniumsoftware/SMPPSim/pdu/DeliveryReceipt.java,v 1.1 2012/07/24 14:48:58 martin Exp $
+ * $Header: /var/cvsroot/SMPPSim2/src/java/com/seleniumsoftware/SMPPSim/pdu/DeliveryReceipt.java,v 1.15 2012/07/05 16:53:27 martin Exp $
  ****************************************************************************/
 
 package com.seleniumsoftware.SMPPSim.pdu;
 
 import java.util.*;
+import java.util.logging.Logger;
 
 import com.seleniumsoftware.SMPPSim.SMPPSim;
 import com.seleniumsoftware.SMPPSim.pdu.util.PduUtilities;
-import org.slf4j.LoggerFactory;
 
 public class DeliveryReceipt extends DeliverSM {
-    
-        
-    private static org.slf4j.Logger logger = LoggerFactory.getLogger(DeliverSM.class);
-
-//	private static Logger logger = Logger.getLogger("com.seleniumsoftware.smppsim");
+	private static Logger logger = Logger.getLogger("com.seleniumsoftware.smppsim");
 
 	// PDU fields
 	private String message_id = "";
@@ -240,7 +236,7 @@ public class DeliveryReceipt extends DeliverSM {
 	 * @param string
 	 */
 	public void setDone_date(String string) {
-		logger.debug("Setting done_date=" + string);
+		logger.finest("Setting done_date=" + string);
 		done_date = string;
 	}
 

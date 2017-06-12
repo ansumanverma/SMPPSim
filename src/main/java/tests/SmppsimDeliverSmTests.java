@@ -7,8 +7,6 @@ import java.net.*;
 import java.util.logging.*;
 import com.logica.smpp.*;
 import com.logica.smpp.pdu.*;
-import com.seleniumsoftware.SMPPSim.SMPPSim;
-import org.slf4j.LoggerFactory;
 
 public class SmppsimDeliverSmTests extends TestCase {
 
@@ -25,8 +23,8 @@ public class SmppsimDeliverSmTests extends TestCase {
 	String smppHost = "localhost";
 	int smppPort = 2775;
 	int smppAltPort2 = 2777;
-//	private static Logger logger = Logger.getLogger("smppsim.tests");
-    private static org.slf4j.Logger logger = LoggerFactory.getLogger("test");
+	private static Logger logger = Logger.getLogger("smppsim.tests");
+
 	public SmppsimDeliverSmTests() {
 	}
 
@@ -53,7 +51,8 @@ public class SmppsimDeliverSmTests extends TestCase {
 			breq.setAddressRange((byte) 1, (byte) 1, smppAddressRange);
 			resp = session.bind(breq);
 		} catch (Exception e) {
-			logger.error(
+			logger.log(Level.WARNING, "Exception: " + e.getMessage(), e);
+			logger.warning(
 				"Exception whilst setting up or executing bind receiver. "
 					+ e.getMessage());
 			fail(
@@ -88,9 +87,9 @@ public class SmppsimDeliverSmTests extends TestCase {
 
 					} else {
 						if (pdu instanceof EnquireLinkResp) {
-							logger.debug("EnquireLinkResp received");
+							logger.finer("EnquireLinkResp received");
 						} else {
-							logger.debug(
+							logger.warning(
 								"Unexpected PDU of type: "
 									+ pdu.getClass().getName()
 									+ " received - discarding");
@@ -118,7 +117,8 @@ public class SmppsimDeliverSmTests extends TestCase {
 		try {
 			session.unbind();
 		} catch (Exception e) {
-			logger.error(
+			logger.log(Level.WARNING, "Exception: " + e.getMessage(), e);
+			logger.warning(
 				"Unbind operation failed for RX session. " + e.getMessage());
 		}
 	}

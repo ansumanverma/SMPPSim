@@ -22,7 +22,7 @@
  * @author martin@seleniumsoftware.com
  * http://www.woolleynet.com
  * http://www.seleniumsoftware.com
- * $Header: /var/cvsroot/SMPPSim2/distribution/2.6.9/SMPPSim/src/java/com/seleniumsoftware/SMPPSim/MessageState.java,v 1.1 2012/07/24 14:48:59 martin Exp $
+ * $Header: /var/cvsroot/SMPPSim2/src/java/com/seleniumsoftware/SMPPSim/MessageState.java,v 1.8 2011/01/31 06:50:13 martin Exp $
  ****************************************************************************/
 
 package com.seleniumsoftware.SMPPSim;
@@ -31,14 +31,12 @@ import com.seleniumsoftware.SMPPSim.pdu.*;
 
 import java.text.ParseException;
 import java.util.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.logging.*;
 
 public class MessageState {
-//	private static Logger logger = Logger
-//			.getLogger("com.seleniumsoftware.smppsim");
+	private static Logger logger = Logger
+			.getLogger("com.seleniumsoftware.smppsim");
 
-    private static Logger logger = LoggerFactory.getLogger(MessageState.class);
 	// key
 	private String message_id;
 
@@ -87,20 +85,23 @@ public class MessageState {
 			if (!pdu.getValidity_period().equals(""))
 				validity_period = new SmppTime(pdu.getValidity_period());
 			else {
-				//logger.info("Validity period is not set: defaulting to 5 minutes from now");
+				logger
+						.info("Validity period is not set: defaulting to 5 minutes from now");
 				long now = System.currentTimeMillis() + 300000;
 				String st = SmppTime.dateToSMPPString(new Date(now));
 				validity_period = new SmppTime(st);
-				//logger.info("Generated default validity period=" + st);
+				logger.info("Generated default validity period=" + st);
 			}
 		} catch (ParseException e) {
-			logger.error("Could not parse validity period : using default of 5 minutes");
+			logger
+					.warning("Could not parse validity period : using default of 5 minutes");
 			long vtime = System.currentTimeMillis() + 300000;
 			Date vdate = new Date(vtime);
 			try {
 				validity_period = new SmppTime(SmppTime.dateToSMPPString(vdate));
 			} catch (ParseException e2) {
-				logger.error("Internal error: could not set default validity period due to parse error");
+				logger
+						.severe("Internal error: could not set default validity period due to parse error");
 			}
 		}
 	}
@@ -246,17 +247,13 @@ public class MessageState {
 		validity_period = time;
 	}
 
-//	public String toString() {
-//		return "message_id=" + message_id + "," + "source_addr_ton="
-//				+ source_addr_ton + "," + "source_addr_npi=" + source_addr_npi
-//				+ "," + "source_addr=" + source_addr + "," + "PDU=" + pdu + ","
-//				+ "state=" + state + "," + "submit_time=" + submit_time + ","
-//				+ "final_time=" + final_time + "," + "finalDate=" + finalDate
-//				+ "," + "validity_period=" + validity_period;
-//	}
-        
-        public String toString() {
-		return "OP:" + source_addr + "  CP:" + pdu.getDestination_addr();
+	public String toString() {
+		return "message_id=" + message_id + "," + "source_addr_ton="
+				+ source_addr_ton + "," + "source_addr_npi=" + source_addr_npi
+				+ "," + "source_addr=" + source_addr + "," + "PDU=" + pdu + ","
+				+ "state=" + state + "," + "submit_time=" + submit_time + ","
+				+ "final_time=" + final_time + "," + "finalDate=" + finalDate
+				+ "," + "validity_period=" + validity_period;
 	}
 
 	public String keyToString() {
@@ -285,7 +282,7 @@ public class MessageState {
 		try {
 			finalDate = new SmppTime(stime);
 		} catch (ParseException e) {
-			logger.error("ParseException - this should be impossible");
+			logger.warning("ParseException - this should be impossible");
 			finalDate = null;
 		}
 	}

@@ -22,18 +22,14 @@
  * @author martin@seleniumsoftware.com
  * http://www.woolleynet.com
  * http://www.seleniumsoftware.com
- * $Header: /var/cvsroot/SMPPSim2/distribution/2.6.9/SMPPSim/src/java/com/seleniumsoftware/SMPPSim/pdu/ReplaceSM.java,v 1.1 2012/07/24 14:48:58 martin Exp $
+ * $Header: /var/cvsroot/SMPPSim2/src/java/com/seleniumsoftware/SMPPSim/pdu/ReplaceSM.java,v 1.7 2011/01/31 08:00:23 martin Exp $
  ****************************************************************************/
 
 package com.seleniumsoftware.SMPPSim.pdu;
 
 import com.seleniumsoftware.SMPPSim.pdu.util.*;
-import org.slf4j.LoggerFactory;
 
 public class ReplaceSM extends Request implements Demarshaller {
-
-          
-    private static org.slf4j.Logger logger = LoggerFactory.getLogger(ReplaceSM.class);
 
 	// PDU attributes
 
@@ -68,7 +64,7 @@ public class ReplaceSM extends Request implements Demarshaller {
 					inx, 65, PduConstants.C_OCTET_STRING_TYPE);
 		} catch (Exception e) {
 			logger
-					.debug("REPLACE_SM PDU is malformed. message_id is incorrect");
+					.severe("REPLACE_SM PDU is malformed. message_id is incorrect");
 			throw (e);
 		}
 		inx = inx + message_id.length() + 1;
@@ -76,7 +72,7 @@ public class ReplaceSM extends Request implements Demarshaller {
 			source_addr_ton = PduUtilities.getIntegerValue(request, inx, 1);
 		} catch (Exception e) {
 			logger
-					.debug("REPLACE_SM PDU is malformed. source_addr_ton is incorrect");
+					.severe("REPLACE_SM PDU is malformed. source_addr_ton is incorrect");
 			throw (e);
 		}
 		inx = inx + 1;
@@ -84,7 +80,7 @@ public class ReplaceSM extends Request implements Demarshaller {
 			source_addr_npi = PduUtilities.getIntegerValue(request, inx, 1);
 		} catch (Exception e) {
 			logger
-					.debug("REPLACE_SM PDU is malformed. source_addr_npi is incorrect");
+					.severe("REPLACE_SM PDU is malformed. source_addr_npi is incorrect");
 			throw (e);
 		}
 		inx = inx + 1;
@@ -93,7 +89,7 @@ public class ReplaceSM extends Request implements Demarshaller {
 					inx, 21, PduConstants.C_OCTET_STRING_TYPE);
 		} catch (Exception e) {
 			logger
-					.debug("REPLACE_SM PDU is malformed. source_addr is incorrect");
+					.severe("REPLACE_SM PDU is malformed. source_addr is incorrect");
 			throw (e);
 		}
 		inx = inx + source_addr.length() + 1;
@@ -102,7 +98,7 @@ public class ReplaceSM extends Request implements Demarshaller {
 					request, inx, 17, PduConstants.C_OCTET_STRING_TYPE);
 		} catch (Exception e) {
 			logger
-					.debug("REPLACE_SM PDU is malformed. schedule_delivery_time is incorrect");
+					.severe("REPLACE_SM PDU is malformed. schedule_delivery_time is incorrect");
 			throw (e);
 		}
 		inx = inx + schedule_delivery_time.length() + 1;
@@ -111,7 +107,7 @@ public class ReplaceSM extends Request implements Demarshaller {
 					request, inx, 17, PduConstants.C_OCTET_STRING_TYPE);
 		} catch (Exception e) {
 			logger
-					.debug("REPLACE_SM PDU is malformed. validity_period is incorrect");
+					.severe("REPLACE_SM PDU is malformed. validity_period is incorrect");
 			throw (e);
 		}
 		inx = inx + validity_period.length() + 1;
@@ -120,7 +116,7 @@ public class ReplaceSM extends Request implements Demarshaller {
 					inx, 1);
 		} catch (Exception e) {
 			logger
-					.debug("REPLACE_SM PDU is malformed. registered_delivery_flag is incorrect");
+					.severe("REPLACE_SM PDU is malformed. registered_delivery_flag is incorrect");
 			throw (e);
 		}
 		inx = inx + 1;
@@ -128,7 +124,7 @@ public class ReplaceSM extends Request implements Demarshaller {
 			sm_default_msg_id = PduUtilities.getIntegerValue(request, inx, 1);
 		} catch (Exception e) {
 			logger
-					.debug("REPLACE_SM PDU is malformed. sm_default_msg_id is incorrect");
+					.severe("REPLACE_SM PDU is malformed. sm_default_msg_id is incorrect");
 			throw (e);
 		}
 		inx = inx + 1;
@@ -136,7 +132,7 @@ public class ReplaceSM extends Request implements Demarshaller {
 			sm_length = PduUtilities.getIntegerValue(request, inx, 1);
 		} catch (Exception e) {
 			logger
-					.debug("REPLACE_SM PDU is malformed. sm_length is incorrect");
+					.severe("REPLACE_SM PDU is malformed. sm_length is incorrect");
 			throw (e);
 		}
 		inx = inx + 1;

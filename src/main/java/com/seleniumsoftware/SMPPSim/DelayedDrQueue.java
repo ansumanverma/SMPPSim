@@ -29,26 +29,23 @@ package com.seleniumsoftware.SMPPSim;
 import com.seleniumsoftware.SMPPSim.exceptions.InboundQueueFullException;
 import com.seleniumsoftware.SMPPSim.pdu.*;
 
+import java.util.logging.*;
 import java.util.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class DelayedDrQueue implements Runnable {
 
 	private static DelayedDrQueue drqueue;
 
-//	private static Logger logger = Logger
-//			.getLogger("com.seleniumsoftware.smppsim");
-    private static Logger logger = LoggerFactory.getLogger(CallbackServerConnector.class);
-	
-    private Smsc smsc = Smsc.getInstance();
+	private static Logger logger = Logger.getLogger("com.seleniumsoftware.smppsim");
+
+	private Smsc smsc = Smsc.getInstance();
 
 	private InboundQueue iqueue = InboundQueue.getInstance();
 
 	ArrayList<DeliveryReceipt> dr_queue_pdus;
 
 	private static final int period = 5000;
-	
+
 	private long delay_ms;
 
 	public static DelayedDrQueue getInstance() {
@@ -65,12 +62,10 @@ public class DelayedDrQueue implements Runnable {
 	public void delayDeliveryReceipt(DeliveryReceipt pdu) {
 		synchronized (dr_queue_pdus) {
 			if (!dr_queue_pdus.contains(pdu)) {
-				logger.debug("DelayedDrQueue: adding object to queue<"
-						+ pdu.toString() + ">");
+				logger.finest("DelayedDrQueue: adding object to queue<" + pdu.toString() + ">");
 				dr_queue_pdus.add(pdu);
 			}
-			logger.debug("DelayedDrQueue: now contains " + dr_queue_pdus.size()
-					+ " object(s)");
+			logger.finest("DelayedDrQueue: now contains " + dr_queue_pdus.size() + " object(s)");
 		}
 	}
 
@@ -80,34 +75,37 @@ public class DelayedDrQueue implements Runnable {
 
 		logger.info("Starting DelayedDrQueue service....");
 
-		while (true) {
+		while (smsc.isRunning()) {
 			try {
 				Thread.sleep(period);
 			} catch (InterruptedException e) {
 			}
-			int dcount = dr_queue_pdus.size();
-			logger.debug("Processing " + dcount
-					+ " messages in the delayed DR queue");
+			if (smsc.isRunning()) {
+				int dcount = dr_queue_pdus.size();
+				logger.finest("Processing " + dcount + " messages in the delayed DR queue");
 
-			synchronized (dr_queue_pdus) {
-				for (int i = 0; i < dr_queue_pdus.size(); i++) {
-					Pdu mo = dr_queue_pdus.get(i);
-					try {
-						DeliverSM dsm = (DeliverSM) mo;
-						long earliest_delivery_time = (dsm.getCreated()+delay_ms);
-						long now = System.currentTimeMillis();
-						long diff = earliest_delivery_time - now;
-						//logger.debug("Considering delivery receipt: "+(diff/1000)+" seconds to go");
-						if (earliest_delivery_time < now) {
-							iqueue.addMessage(mo);
-							dr_queue_pdus.remove(mo);
+				synchronized (dr_queue_pdus) {
+					for (int i = 0; i < dr_queue_pdus.size(); i++) {
+						Pdu mo = dr_queue_pdus.get(i);
+						try {
+							DeliverSM dsm = (DeliverSM) mo;
+							long earliest_delivery_time = (dsm.getCreated() + delay_ms);
+							long now = System.currentTimeMillis();
+							long diff = earliest_delivery_time - now;
+							logger.finest("Considering delivery receipt: " + (diff / 1000) + " seconds to go");
+							if (earliest_delivery_time < now) {
+								iqueue.addMessage(mo);
+								dr_queue_pdus.remove(mo);
+							}
+						} catch (InboundQueueFullException e) {
+							// try again next time around
 						}
-					} catch (InboundQueueFullException e) {
-						// try again next time around
 					}
 				}
 			}
 		}
+		logger.info("DelayedDrQueue is exiting");
+
 	}
 
 }

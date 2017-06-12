@@ -22,20 +22,17 @@
  * @author martin@seleniumsoftware.com
  * http://www.woolleynet.com
  * http://www.seleniumsoftware.com
- * $Header: /var/cvsroot/SMPPSim2/distribution/2.6.9/SMPPSim/src/java/com/seleniumsoftware/SMPPSim/pdu/Pdu.java,v 1.1 2012/07/24 14:48:59 martin Exp $
+ * $Header: /var/cvsroot/SMPPSim2/src/java/com/seleniumsoftware/SMPPSim/pdu/Pdu.java,v 1.7 2011/01/31 08:00:23 martin Exp $
  ****************************************************************************/
 
 package com.seleniumsoftware.SMPPSim.pdu;
 
 import java.io.Serializable;
-import org.slf4j.LoggerFactory;
+import java.util.logging.Logger;
 
 abstract public class Pdu implements Serializable {
 
-        
-    private static org.slf4j.Logger logger = LoggerFactory.getLogger(DeliverSM.class);
-
-//	static Logger logger = Logger.getLogger("com.seleniumsoftware.smppsim");
+	static Logger logger = Logger.getLogger("com.seleniumsoftware.smppsim");
 
 	// need this for RMI use
 	public Pdu() {

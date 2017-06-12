@@ -1,20 +1,18 @@
 package com.seleniumsoftware.examples;
 
 import java.net.ServerSocket;
-import org.slf4j.LoggerFactory;
+import java.util.logging.Logger;
 
 public class CallbackReceiver implements CallbackReceivable {
 
-    private static org.slf4j.Logger logger = LoggerFactory.getLogger(CallbackReceiver.class);
-
-//	private static Logger logger = Logger.getLogger("com.seleniumsoftware.examples");
+	private static Logger logger = Logger.getLogger("com.seleniumsoftware.examples");
 	
 	public void sent(byte[] pdu) {
 		hexDump("SMPPSim sent to ESME:", pdu, pdu.length);
 		if (pduIsDeliverSm(pdu)) {
 			logger.info("(PDU type was DeliverSM)");
 		} else
-			logger.debug("Unrecognised PDU type");
+			logger.warning("Unrecognised PDU type");
 	}
 
 	public void received(byte[] pdu) {
@@ -34,7 +32,7 @@ public class CallbackReceiver implements CallbackReceivable {
 		} else if (pduIsUnbind(pdu)) {
 			logger.info("(PDU type was Unbind)");
 		} else
-			logger.debug("Unrecognised PDU type");
+			logger.warning("Unrecognised PDU type");
 	}
 
 	private boolean pduIsSubmitSm(byte[] pdu) {

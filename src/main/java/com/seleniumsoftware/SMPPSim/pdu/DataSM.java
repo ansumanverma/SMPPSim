@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import com.seleniumsoftware.SMPPSim.pdu.util.PduUtilities;
-import org.slf4j.LoggerFactory;
 
 /****************************************************************************
  * DataSM
@@ -31,17 +30,15 @@ import org.slf4j.LoggerFactory;
  * along with SMPPSim; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * @author Jean-Cedric Desrochers
  * http://www.woolleynet.com
  * http://www.seleniumsoftware.com
- * $Header: /var/cvsroot/SMPPSim2/distribution/2.6.9/SMPPSim/src/java/com/seleniumsoftware/SMPPSim/pdu/DataSM.java,v 1.1 2012/07/24 14:48:59 martin Exp $
+ * $Header: /var/cvsroot/SMPPSim2/src/java/com/seleniumsoftware/SMPPSim/pdu/DataSM.java,v 1.8 2012/11/12 19:10:00 martin Exp $
  ****************************************************************************/
 
 public class DataSM extends Request implements Demarshaller, Marshaller {
 
-//	private static Logger logger = Logger
-//			.getLogger("com.seleniumsoftware.smppsim");
-    private static org.slf4j.Logger logger = LoggerFactory.getLogger(DataSM.class);
+	private static Logger logger = Logger
+			.getLogger("com.seleniumsoftware.smppsim");
 
 	// Mandatory PDU attributes
 	private String service_type;
@@ -114,7 +111,7 @@ public class DataSM extends Request implements Demarshaller, Marshaller {
 					inx, 6, PduConstants.C_OCTET_STRING_TYPE);
 		} catch (Exception e) {
 			logger
-					.debug("DATA_SM PDU is malformed. service_type is incorrect");
+					.severe("DATA_SM PDU is malformed. service_type is incorrect");
 			throw (e);
 		}
 
@@ -124,7 +121,7 @@ public class DataSM extends Request implements Demarshaller, Marshaller {
 			source_addr_ton = PduUtilities.getIntegerValue(request, inx, 1);
 		} catch (Exception e) {
 			logger
-					.debug("DATA_SM PDU is malformed. source_addr_ton is incorrect");
+					.severe("DATA_SM PDU is malformed. source_addr_ton is incorrect");
 			throw (e);
 		}
 
@@ -134,7 +131,7 @@ public class DataSM extends Request implements Demarshaller, Marshaller {
 			source_addr_npi = PduUtilities.getIntegerValue(request, inx, 1);
 		} catch (Exception e) {
 			logger
-					.debug("DATA_SM PDU is malformed. source_addr_npi is incorrect");
+					.severe("DATA_SM PDU is malformed. source_addr_npi is incorrect");
 			throw (e);
 		}
 
@@ -144,7 +141,7 @@ public class DataSM extends Request implements Demarshaller, Marshaller {
 			source_addr = PduUtilities.getStringValueNullTerminated(request,
 					inx, 21, PduConstants.C_OCTET_STRING_TYPE);
 		} catch (Exception e) {
-			logger.debug("DATA_SM PDU is malformed. source_addr is incorrect");
+			logger.severe("DATA_SM PDU is malformed. source_addr is incorrect");
 			throw (e);
 		}
 
@@ -154,7 +151,7 @@ public class DataSM extends Request implements Demarshaller, Marshaller {
 			dest_addr_ton = PduUtilities.getIntegerValue(request, inx, 1);
 		} catch (Exception e) {
 			logger
-					.debug("DATA_SM PDU is malformed. dest_addr_ton is incorrect");
+					.severe("DATA_SM PDU is malformed. dest_addr_ton is incorrect");
 			throw (e);
 		}
 
@@ -164,7 +161,7 @@ public class DataSM extends Request implements Demarshaller, Marshaller {
 			dest_addr_npi = PduUtilities.getIntegerValue(request, inx, 1);
 		} catch (Exception e) {
 			logger
-					.debug("DATA_SM PDU is malformed. dest_addr_npi is incorrect");
+					.severe("DATA_SM PDU is malformed. dest_addr_npi is incorrect");
 			throw (e);
 		}
 
@@ -175,7 +172,7 @@ public class DataSM extends Request implements Demarshaller, Marshaller {
 					request, inx, 21, PduConstants.C_OCTET_STRING_TYPE);
 		} catch (Exception e) {
 			logger
-					.debug("DATA_SM PDU is malformed. destination_addr is incorrect");
+					.severe("DATA_SM PDU is malformed. destination_addr is incorrect");
 			throw (e);
 		}
 
@@ -184,7 +181,7 @@ public class DataSM extends Request implements Demarshaller, Marshaller {
 		try {
 			esm_class = PduUtilities.getIntegerValue(request, inx, 1);
 		} catch (Exception e) {
-			logger.debug("DATA_SM PDU is malformed. esm_class is incorrect");
+			logger.severe("DATA_SM PDU is malformed. esm_class is incorrect");
 			throw (e);
 		}
 
@@ -195,7 +192,7 @@ public class DataSM extends Request implements Demarshaller, Marshaller {
 					inx, 1);
 		} catch (Exception e) {
 			logger
-					.debug("DATA_SM PDU is malformed. registered_delivery_flag is incorrect");
+					.severe("DATA_SM PDU is malformed. registered_delivery_flag is incorrect");
 			throw (e);
 		}
 
@@ -204,7 +201,7 @@ public class DataSM extends Request implements Demarshaller, Marshaller {
 		try {
 			data_coding = PduUtilities.getIntegerValue(request, inx, 1);
 		} catch (Exception e) {
-			logger.debug("DATA_SM PDU is malformed. data_coding is incorrect");
+			logger.severe("DATA_SM PDU is malformed. data_coding is incorrect");
 			throw (e);
 		}
 
@@ -217,7 +214,7 @@ public class DataSM extends Request implements Demarshaller, Marshaller {
 			try {
 				tag = (short) PduUtilities.getIntegerValue(request, inx, 2);
 			} catch (Exception e) {
-				logger.debug("DATA_SM PDU is malformed. TLV tag at position "
+				logger.severe("DATA_SM PDU is malformed. TLV tag at position "
 						+ inx + " is incorrect");
 				throw (e);
 			}
@@ -226,7 +223,7 @@ public class DataSM extends Request implements Demarshaller, Marshaller {
 				oplen = (short) PduUtilities.getIntegerValue(request, inx, 2);
 			} catch (Exception e) {
 				logger
-						.debug("DATA_SM PDU is malformed. TLV length at position "
+						.severe("DATA_SM PDU is malformed. TLV length at position "
 								+ inx + " is incorrect");
 				throw (e);
 			}

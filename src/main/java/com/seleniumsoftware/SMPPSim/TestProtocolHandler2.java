@@ -22,7 +22,7 @@
  * @author martin@seleniumsoftware.com
  * http://www.woolleynet.com
  * http://www.seleniumsoftware.com
- * $Header: /var/cvsroot/SMPPSim2/distribution/2.6.9/SMPPSim/src/java/com/seleniumsoftware/SMPPSim/TestProtocolHandler2.java,v 1.1 2012/07/24 14:48:59 martin Exp $
+ * $Header: /var/cvsroot/SMPPSim2/src/java/com/seleniumsoftware/SMPPSim/TestProtocolHandler2.java,v 1.4 2011/01/31 06:50:13 martin Exp $
  ****************************************************************************/
 
 package com.seleniumsoftware.SMPPSim;
@@ -31,12 +31,10 @@ import com.seleniumsoftware.SMPPSim.pdu.*;
 import com.seleniumsoftware.SMPPSim.util.*;
 
 import java.util.*;
-import org.slf4j.LoggerFactory;
+import java.util.logging.*;
 
 public class TestProtocolHandler2 extends StandardProtocolHandler {
-    
-     private static org.slf4j.Logger logger = LoggerFactory.getLogger(TestProtocolHandler2.class);
-//	private static Logger logger = Logger.getLogger("com.seleniumsoftware.smppsim");
+	private static Logger logger = Logger.getLogger("com.seleniumsoftware.smppsim");
 
 	public TestProtocolHandler2() {
 	}
@@ -63,7 +61,7 @@ public class TestProtocolHandler2 extends StandardProtocolHandler {
 
 		// Validate session
 		if ((!session.isBound()) || (!session.isTransmitter())) {
-			logger.debug(
+			logger.warning(
 				"Invalid bind state. Must be bound as transmitter for this PDU");
 			wasInvalidBindState = true;
 			smsc.incSubmitSmERR();
@@ -112,7 +110,7 @@ public class TestProtocolHandler2 extends StandardProtocolHandler {
 
 		// Validate session
 		if ((!session.isBound()) || (!session.isTransmitter())) {
-			logger.debug(
+			logger.warning(
 				"Invalid bind state. Must be bound as transmitter for this PDU");
 			wasInvalidBindState = true;
 			smsc.incSubmitMultiERR();
@@ -138,7 +136,7 @@ public class TestProtocolHandler2 extends StandardProtocolHandler {
 					long n = Long.parseLong(dest);
 				} catch (NumberFormatException nfe) {
 					// MSISDN treated as invalid
-					logger.debug(
+					logger.warning(
 						"'Invalid' MSISDN "
 							+ sme.getSme_ton()
 							+ ","
@@ -194,7 +192,7 @@ public class TestProtocolHandler2 extends StandardProtocolHandler {
 
 		// Validate session
 		if (!session.isBound()) {
-			logger.debug("Invalid bind state. Must be bound for this PDU");
+			logger.warning("Invalid bind state. Must be bound for this PDU");
 			wasInvalidBindState = true;
 			resp_message = smppresp.errorResponse(smppresp.getCmd_id(),
 					PduConstants.ESME_RINVBNDSTS, smppresp.getSeq_no());
@@ -212,7 +210,7 @@ public class TestProtocolHandler2 extends StandardProtocolHandler {
 		if (session.isReceiver()) {
 			smsc.receiverUnbound();
 		}
-		logger.debug("Receiver:" + session.isReceiver() + ",Transmitter:"
+		logger.finest("Receiver:" + session.isReceiver() + ",Transmitter:"
 				+ session.isTransmitter());
 		if (session.isReceiver() && session.isTransmitter())
 			smsc.setTrxBoundCount(smsc.getTrxBoundCount() - 1);

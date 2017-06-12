@@ -6,7 +6,6 @@ import java.net.*;
 import java.util.logging.*;
 import com.logica.smpp.*;
 import com.logica.smpp.pdu.*;
-import org.slf4j.LoggerFactory;
 
 public class SmppsimReplaceSmTests extends TestCase {
 
@@ -23,9 +22,7 @@ public class SmppsimReplaceSmTests extends TestCase {
 	String smppHost = "localhost";
 	int smppPort = 2775;
 	int smppAltPort1 = 2776;
-    private static org.slf4j.Logger logger = LoggerFactory.getLogger("test");
-
-//	private static Logger logger = Logger.getLogger("smppsim.tests");
+	private static Logger logger = Logger.getLogger("smppsim.tests");
 
 	public SmppsimReplaceSmTests() {
 	}
@@ -52,7 +49,8 @@ public class SmppsimReplaceSmTests extends TestCase {
 			breq.setSystemType(smppSystemType);
 			resp = session.bind(breq);
 		} catch (Exception e) {
-			logger.error(
+			logger.log(Level.WARNING, "Exception: " + e.getMessage(), e);
+			logger.warning(
 				"Exception whilst setting up or executing bind transmitter. "
 					+ e.getMessage());
 			fail(
@@ -97,10 +95,10 @@ public class SmppsimReplaceSmTests extends TestCase {
 				Data.ESME_ROK,
 				response.getCommandStatus());
 		} catch (SocketException se) {
-			logger.error("Connection has dropped");
+			logger.warning("Connection has dropped");
 			throw se;
 		} catch (Exception e) {
-			logger.error(e.getMessage());
+			logger.warning(e.getMessage());
 			throw new SubmitSmFailedException();
 		}
 
@@ -127,10 +125,10 @@ public class SmppsimReplaceSmTests extends TestCase {
 				Data.ESME_ROK,
 				response.getCommandStatus());
 		} catch (SocketException se) {
-			logger.error("Connection has dropped");
+			logger.warning("Connection has dropped");
 			throw se;
 		} catch (Exception e) {
-			logger.error(e.getMessage());
+			logger.warning(e.getMessage());
 			throw new ReplaceSmFailedException();
 		}
 
@@ -138,7 +136,8 @@ public class SmppsimReplaceSmTests extends TestCase {
 		try {
 			UnbindResp response = session.unbind();
 		} catch (Exception e) {
-			logger.error(
+			logger.log(Level.WARNING, "Exception: " + e.getMessage(), e);
+			logger.warning(
 				"Unbind operation failed for TX session. " + e.getMessage());
 		}
 	}
