@@ -16,10 +16,10 @@
 
     - name: ensure docker and dependencies are installed
       apt: name=docker-engine state=present
-      apt: update_cache=yes upgrade=safe cache_valid_time=3600
+      # apt: update_cache=yes upgrade=safe cache_valid_time=3600
 
     # Uncomment the following to enable insecure registries with Docker
-    - name: ensure docker can use insecure registries in 10.11.0.0/16
+    - name: ensure docker can use insecure registries in 192.168.0.0/16
       lineinfile: "dest=/etc/default/docker regexp=^DOCKER_OPTS line=DOCKER_OPTS='--insecure-registry 192.168.0.0/16'"
 
     - service: name=docker state=restarted
