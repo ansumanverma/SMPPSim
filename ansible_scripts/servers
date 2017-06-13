@@ -1,0 +1,7 @@
+[testserver]
+192.168.154.134 ansible_ssh_user=osboxes ansible_ssh_pass=osboxes.org
+[devserver]
+192.168.174.134 ansible_ssh_user=osboxes ansible_ssh_pass=osboxes.org
+[deployserver]
+192.168.174.134 ansible_ssh_user=osboxes ansible_ssh_pass=osboxes.org
+
