@@ -27,10 +27,15 @@
          version: "1.7.0"
     
     - name: remove devops demo container
-      docker:
-        name : DevOPS_Demo_Delete
-        image: 192.168.174.133:5000/smppsim
+      docker_container:
+        name: DevOPS_Demo
         state: absent
+    
+    - name: remove smppsim image
+      docker_image:
+        state: absent
+        name: 192.168.174.133:5000/smppsim
+        tag: latest
  
     - name: devops demo container
       docker:
