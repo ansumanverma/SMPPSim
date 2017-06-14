@@ -59,7 +59,6 @@ public class AppTest
 	String smppServiceType = "tests";
 	String srcAddress = "12345";
 	String destAddress = "4477805432122";
-	int smppAltPort1 = 2776;
 	
 	private static Logger logger = Logger.getLogger("smppsim.tests");
 	 private static org.slf4j.Logger logger1 = LoggerFactory.getLogger("test");
@@ -710,112 +709,6 @@ public class AppTest
 			}
 		}
 
-		/*
-		 * Condition: submit_sm with "bad" MSISDN. Must run against SMPPSim with TestProtocolHandler1 .
-		 * This protocol handler will treat destAddresses that are non-numeric as invalid and
-		 * return ESME_RINVDSTADR
-		 * Expected: No exceptions. ESME_RINVDSTADR response.
-		 */
-
-		public void test002SubmitSMBadDestAddress()
-			throws SubmitSmFailedException, BindTransmitterException, SocketException {
-			logger1.info("Attempting to establish transmitter session");
-			Response resp = null;
-			Connection conn;
-			// get a transmitter session
-			try {
-				conn = new TCPIPConnection(smppHost, smppAltPort1);
-				session = new Session(conn);
-				// Session.getDebug().activate();
-				BindRequest breq = new BindTransmitter();
-				breq.setSystemId(smppAccountName);
-				breq.setPassword(smppPassword);
-				breq.setInterfaceVersion((byte) 0x34);
-				breq.setSystemType(smppSystemType);
-				resp = session.bind(breq);
-			} catch (Exception e) {
-				logger1.error(
-					"Exception whilst setting up or executing bind transmitter. "
-						+ e.getMessage());
-				fail(
-					"Exception whilst setting up or executing bind transmitter. "
-						+ e.getMessage());
-				throw new BindTransmitterException(
-					"Exception whilst setting up or executing bind transmitter. "
-						+ e.getMessage());
-			}
-			assertEquals(
-				"BindTransmitter failed: response was not ESME_ROK",
-				Data.ESME_ROK,
-				resp.getCommandStatus());
-			logger1.info("Established transmitter session successfully");
-
-			// now submit a mesage
-			try {
-				SubmitSM request = new SubmitSM();
-				SubmitSMResp response;
-				// set values
-				request.setServiceType(smppServiceType);
-				request.setSourceAddr(srcAddress);
-				request.setDestAddr("ABCDE");
-				request.setShortMessage(
-					"SUBMIT_SM test with invalid MSISDN using JUnit");
-				//			request.setRegisteredDelivery(om.getRegistered_delivery_flag());
-				//			request.setDataCoding((byte) 0);
-
-				// send the request
-
-				request.assignSequenceNumber(true);
-				response = session.submit(request);
-				assertEquals(
-					"SUBMIT_SM response incorrect: response was not ESME_RINVDSTADR",
-					Data.ESME_RINVDSTADR,
-					response.getCommandStatus());
-			} catch (SocketException se) {
-				logger1.error("Connection has dropped");
-				throw se;
-			} catch (Exception e) {
-				logger1.error(e.getMessage());
-				throw new SubmitSmFailedException();
-			}
-
-			// now submit another mesage to see if this is still working
-			try {
-				SubmitSM request = new SubmitSM();
-				SubmitSMResp response;
-				// set values
-				request.setServiceType(smppServiceType);
-				request.setSourceAddr(srcAddress);
-				request.setDestAddr(destAddress);
-				request.setShortMessage(
-					"SUBMIT_SM test with valid MSISDN using JUnit");
-				//			request.setRegisteredDelivery(om.getRegistered_delivery_flag());
-				//			request.setDataCoding((byte) 0);
-
-				// send the request
-
-				request.assignSequenceNumber(true);
-				response = session.submit(request);
-				assertEquals(
-					"SUBMIT_SM response incorrect: response was not ESME_ROK",
-					Data.ESME_ROK,
-					response.getCommandStatus());
-			} catch (SocketException se) {
-				logger1.error("Connection has dropped");
-				throw se;
-			} catch (Exception e) {
-				logger1.error(e.getMessage());
-				throw new SubmitSmFailedException();
-			}
-
-			// Now unbind and disconnect ready for the next test
-			try {
-				UnbindResp response = session.unbind();
-			} catch (Exception e) {
-				logger1.error(
-					"Unbind operation failed for TX session. " + e.getMessage());
-			}
-		}
 		public void test003SubmitSMRequestDeliveryReceipt()
 			throws
 				SubmitSmFailedException,
