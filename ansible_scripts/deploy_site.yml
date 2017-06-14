@@ -1,4 +1,4 @@
-- hosts: devserver
+- hosts: deployserver
   become: true
   
   tasks:
