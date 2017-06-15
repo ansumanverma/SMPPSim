@@ -10,6 +10,23 @@ import junit.framework.TestSuite;
 public class AppTest 
     extends TestCase
 {
+
+    
+	String smppAccountName = "smppclient1";
+	String smppPassword = "password";
+	String smppSystemType = "tests";
+	String smppAddressRange = "[0-9]";
+	boolean txBound;
+	boolean rxBound;
+	Session session;
+	String smppHost = "192.168.174.136";
+	int smppPort = 2775;
+	
+	
+	String smppServiceType = "tests";
+	String srcAddress = "12345";
+	String destAddress = "4477805432122";
+	
     /**
      * Create the test case
      *
@@ -35,4 +52,5 @@ public class AppTest
     {
         assertTrue( true );
     }
+    
 }
