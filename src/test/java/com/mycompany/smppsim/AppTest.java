@@ -1,6 +1,5 @@
 package com.mycompany.smppsim;
 
-
 import java.io.IOException;
 import java.net.SocketException;
 import java.util.logging.Level;
@@ -37,14 +36,15 @@ import tests.exceptions.BindReceiverException;
 import tests.exceptions.BindTransceiverException;
 import tests.exceptions.BindTransmitterException;
 import tests.exceptions.SubmitSmFailedException;
+
 /**
  * Unit test for simple App.
  */
 public class AppTest 
     extends TestCase
 {
+	
 
-    
 	String smppAccountName = "smppclient1";
 	String smppPassword = "password";
 	String smppSystemType = "tests";
@@ -59,6 +59,9 @@ public class AppTest
 	String smppServiceType = "tests";
 	String srcAddress = "12345";
 	String destAddress = "4477805432122";
+	
+	private static Logger logger = Logger.getLogger("smppsim.tests");
+	 private static org.slf4j.Logger logger1 = LoggerFactory.getLogger("test");
 	
     /**
      * Create the test case
@@ -87,3 +90,4 @@ public class AppTest
     }
     
 }
+
