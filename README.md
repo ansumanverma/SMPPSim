@@ -5,7 +5,7 @@ http://www.seleniumsoftware.com/user-guide.htm#quick
 
 REQUIERD SOFTWARE:
 1. java environment java 1.6.x or later.
-2. maven 2.x or 3.x
+2. maven 3.x
 
 QUICK START
 
