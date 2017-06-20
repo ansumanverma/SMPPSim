@@ -1,5 +1,7 @@
 This repo is for self learn.  I modified the origial logging to Slf4j logging which helps me for debugging:)
 
+
+
 SMPPSim official website tutorial:
 http://www.seleniumsoftware.com/user-guide.htm#quick
 
